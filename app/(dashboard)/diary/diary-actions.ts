@@ -17,12 +17,21 @@ async function requireWriter() {
   return session.user;
 }
 
+type DiaryFieldErrors = {
+  classId?: string[];
+  message?: string[];
+  fileUrl?: string[];
+  fileName?: string[];
+  fileType?: string[];
+  root?: string[];
+};
+
 export async function createDiaryEntry(formData: unknown) {
   const user = await requireWriter();
 
   const parsed = diaryEntrySchema.safeParse(formData);
   if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+    return { success: false as const, errors: parsed.error.flatten().fieldErrors as DiaryFieldErrors };
   }
 
   const { classId, message, fileUrl, fileName, fileType } = parsed.data;
@@ -38,10 +47,10 @@ export async function createDiaryEntry(formData: unknown) {
     });
 
     revalidatePath("/diary");
-    return { success: true };
+    return { success: true as const };
   } catch (err) {
     console.error("createDiaryEntry failed:", err);
-    return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+    return { success: false as const, errors: { root: ["Something went wrong. Try again."] } as DiaryFieldErrors };
   }
 }
 
@@ -49,11 +58,10 @@ export async function updateDiaryEntry(entryId: number, message: string) {
   const user = await requireWriter();
 
   if (!message.trim()) {
-    return { success: false, errors: { message: ["Message cannot be empty"] } };
+    return { success: false as const, errors: { message: ["Message cannot be empty"] } as DiaryFieldErrors };
   }
 
   try {
-    // admins can edit any entry, teachers only their own
     const condition =
       user.role === "admin"
         ? eq(diaryEntries.id, entryId)
@@ -61,10 +69,10 @@ export async function updateDiaryEntry(entryId: number, message: string) {
 
     await db.update(diaryEntries).set({ message: message.trim(), updatedAt: new Date() }).where(condition);
     revalidatePath("/diary");
-    return { success: true };
+    return { success: true as const };
   } catch (err) {
     console.error("updateDiaryEntry failed:", err);
-    return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+    return { success: false as const, errors: { root: ["Something went wrong. Try again."] } as DiaryFieldErrors };
   }
 }
 
@@ -79,9 +87,9 @@ export async function deleteDiaryEntry(entryId: number) {
 
     await db.delete(diaryEntries).where(condition);
     revalidatePath("/diary");
-    return { success: true };
+    return { success: true as const };
   } catch (err) {
     console.error("deleteDiaryEntry failed:", err);
-    return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+    return { success: false as const, errors: { root: ["Something went wrong. Try again."] } as DiaryFieldErrors };
   }
 }
