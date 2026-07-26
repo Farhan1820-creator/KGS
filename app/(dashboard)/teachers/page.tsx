@@ -2,6 +2,8 @@ import { db } from "@/db";
 import { subjects } from "@/db/schema";
 import { TeachersClient } from "./teachers-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function TeachersPage() {
   const [teacherRows, subjectList] = await Promise.all([
     db.query.teachers.findMany({

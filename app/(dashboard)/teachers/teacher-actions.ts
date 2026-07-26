@@ -7,8 +7,12 @@ import { teacherSchema } from "./teacher-validation";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
+import type { TeacherFormValues } from "./teacher-validation";
 
-export async function createTeacher(formData: unknown) {
+type TeacherActionErrors = Partial<Record<keyof TeacherFormValues | "root", string[]>>;
+type TeacherActionResult = { success: true } | { success: false; errors: TeacherActionErrors };
+
+export async function createTeacher(formData: unknown): Promise<TeacherActionResult> {
   const parsed = teacherSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors };

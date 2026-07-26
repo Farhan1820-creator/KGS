@@ -16,7 +16,8 @@ export const users = pgTable("users", {
 
 export const classes = pgTable("classes", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 50 }).notNull(), // e.g.npomection: varchar("section", { length: 20 }), // e.g. "A"
+  name: varchar("name", { length: 50 }).notNull(), // e.g. "10"
+  section: varchar("section", { length: 20 }), // e.g. "A"
 });
 
 export const subjects = pgTable("subjects", {

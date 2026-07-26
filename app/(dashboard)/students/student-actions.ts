@@ -7,8 +7,12 @@ import { studentSchema } from "./student-validation";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
+import type { StudentFormValues } from "./student-validation";
 
-export async function createStudent(formData: unknown) {
+type StudentActionErrors = Partial<Record<keyof StudentFormValues | "root", string[]>>;
+type StudentActionResult = { success: true } | { success: false; errors: StudentActionErrors };
+
+export async function createStudent(formData: unknown): Promise<StudentActionResult> {
   const parsed = studentSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors };

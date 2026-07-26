@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { SettingsClient } from "./settings-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const [subjectList, classList] = await Promise.all([
     db.query.subjects.findMany(),

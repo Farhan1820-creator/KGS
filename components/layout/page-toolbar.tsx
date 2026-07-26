@@ -37,7 +37,7 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
               className="w-48"
             />
           ) : (
-            <Select key={f.key} value={values[f.key] ?? ""} onValueChange={(v) => onChange(f.key, v)}>
+            <Select key={f.key} value={values[f.key] ?? ""} onValueChange={(v) => onChange(f.key, v ?? "")}>
               <SelectTrigger className="w-48">
                 <SelectValue placeholder={f.placeholder} />
               </SelectTrigger>

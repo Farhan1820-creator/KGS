@@ -8,7 +8,7 @@ async function seed() {
   await db.insert(users).values({
     name: "Admin",
     email: "admin@kgs.com",
-    passwordHash,
+    password: passwordHash,
     role: "admin",
   });
 
