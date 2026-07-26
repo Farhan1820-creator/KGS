@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# What's built (fully wired)
 
-## Getting Started
+- `db/schema.ts` — users (with role enum), students, teachers, classes, subjects + relations
+- `app/globals.css` — `.page-shell` class, apply to every page's root div for consistent width/padding
+- `components/layout/sidebar.tsx` — collapsible sidebar
+- `components/layout/top-header.tsx` — shows current page name from pathname
+- `app/(dashboard)/layout.tsx` — wraps sidebar + header + `<Toaster />` around all 3 pages
+- `components/layout/page-toolbar.tsx` — generic filter row (search/select) + Add button, reusable
+- `components/layout/data-table.tsx` — generic shadcn table w/ pagination + rows-per-page, reusable
+- **Students** — full slice: `lib/validations/student.ts` (zod) → `actions/student-actions.ts`
+  (server action, transactional insert, toast + field errors) → `student-dialog.tsx` → `student-columns.tsx`
+  → `page.tsx` (single relational query, no N+1) → `students-client.tsx`
 
-First, run the development server:
+# What you replicate for Teachers and Settings (Subject/Class)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Same pattern, different fields:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Teachers** — copy `student-*` files, swap:
+- `lib/validations/teacher.ts`: name, email, password, contactNumber, subjectId (no rollNumber)
+- `actions/teacher-actions.ts`: insert into `users` (role: "teacher") + `teachers` table
+- filters: search by name/contact, select filter by subject
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Settings (Subject / Class)** — simpler, no `users` row involved:
+- Subject form: name, code
+- Class form: name, section
+- No password/email fields, no transaction needed — single table insert
+- Settings page can be two tabs or two stacked tables (Subjects, Classes), each with its own
+  toolbar+dialog+table using the same `PageToolbar` / `DataTable` components
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Before you wire this into your real project
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Confirm the ERD assumption: 1 student → 1 class, 1 teacher → 1 subject. If a teacher can
+   teach multiple subjects, `teachers.subjectId` needs to become a join table instead.
+2. `bcryptjs`, `@tanstack/react-table`, `react-hook-form`, `@hookform/resolvers`, `zod`, `sonner`
+   need to be installed — not included here.
+3. `db/index.ts` (your Drizzle client init) isn't included — wire it to your Neon connection string.
+4. Toast on client is done — server-side duplicate-email check uses Postgres error code `23505`;
+   confirm that matches your Neon driver's error shape.
