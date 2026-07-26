@@ -1,7 +1,7 @@
 import React from 'react'
 
 type StudentDashboardProps = {
-  name: string;
+  name: undefined;
 };
 
 const StudentDashboard = ({name}:StudentDashboardProps) => {

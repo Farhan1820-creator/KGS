@@ -3,7 +3,7 @@ import { users } from '@/db/schema';
 import React from 'react'
 
 type AdminDashboardProps = {
-  name: string;
+  name: undefined;
 };
 
 const AdminDashboard = ({ name }: AdminDashboardProps) => {
