@@ -129,11 +129,10 @@ export function ExpenseDialog({ open, onOpenChange, categories, subCategories, e
               render={({ field }) => (
                 <Select
                   value={field.value}
-                  onValueChange={(v) => {
-                    field.onChange(v);
-                    // reset sub-category when the parent category changes
-                    setValue("subCategoryId", "");
-                  }}
+                  onValueChange={(v: string) => {
+  field.onChange(v);
+  setValue("subCategoryId", "");
+}}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
