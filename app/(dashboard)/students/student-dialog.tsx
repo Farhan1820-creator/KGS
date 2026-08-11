@@ -164,7 +164,7 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
               control={control}
               name="classId"
               render={({ field }) => (
-                <Select value={field.value} onValueChange={(v) => handleClassChange(v, field.onChange)}>
+                <Select value={field.value} onValueChange={(v:string | null) => handleClassChange(v, field.onChange)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>

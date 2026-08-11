@@ -115,8 +115,8 @@ export function CategoryDialog({ open, onOpenChange, categories, subCategories, 
           <DialogTitle>Manage Categories</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="categories">
-          <TabsList>
+        <Tabs defaultValue="categories" className="flex flex-col">
+          <TabsList >
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="subcategories">Sub-categories</TabsTrigger>
           </TabsList>
@@ -161,8 +161,7 @@ export function CategoryDialog({ open, onOpenChange, categories, subCategories, 
           <TabsContent value="subcategories" className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <Label>Category</Label>
-<Select value={subCategoryId} onValueChange={(value: string) => setSubCategoryId(value ?? "")}>
-                  <SelectTrigger>
+<Select value={subCategoryId} onValueChange={(value: string | null) => setSubCategoryId(value ?? "")}>                  <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>

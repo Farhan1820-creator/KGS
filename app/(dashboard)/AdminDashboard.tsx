@@ -31,8 +31,8 @@ function StatCard({
   return (
     <div className="rounded-lg border p-4 flex items-start justify-between">
       <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className={`text-xl font-semibold ${toneClass}`}>{value}</p>
+        <p className=" text-[16px] lg:text-[18px] xl:text-[18px] text-muted-foreground">{label}</p>
+        <p className={`text-[26px] lg:text-[30px] xl:text-[32px] font-semibold ${toneClass}`}>{value}</p>
       </div>
       <Icon className="h-5 w-5 text-muted-foreground" />
     </div>
@@ -119,7 +119,7 @@ export default async function AdminDashboard({ name }: AdminDashboardProps) {
       <h2 className="text-2xl font-semibold">Welcome{name ? `, ${name}` : ""}</h2>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         <StatCard label="Students" value={String(studentCount)} icon={GraduationCap} />
         <StatCard label="Teachers" value={String(teacherCount)} icon={Users} />
         <StatCard label="Classes" value={String(classCount)} icon={Users} />

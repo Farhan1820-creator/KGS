@@ -78,7 +78,7 @@ export function DataTable<TData, TValue>({ columns, data, onRowClick }: DataTabl
           Rows per page
           <Select
             value={String(table.getState().pagination.pageSize)}
-            onValueChange={(v) => table.setPageSize(Number(v))}
+            onValueChange={(v:string | null) => table.setPageSize(Number(v))}
           >
             <SelectTrigger className="w-20">
               <SelectValue />

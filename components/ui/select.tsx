@@ -35,8 +35,7 @@ function collectSelectItems(
   return acc
 }
 
-function Select({ children, ...props }: SelectPrimitive.Root.Props) {
-  const items = React.useMemo(() => collectSelectItems(children), [children])
+function Select({ children, ...props }: SelectPrimitive.Root.Props<string> ) {  const items = React.useMemo(() => collectSelectItems(children), [children])
   return (
     <SelectPrimitive.Root items={items.length ? items : undefined} {...props}>
       {children}

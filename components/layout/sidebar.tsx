@@ -83,7 +83,7 @@ export function Sidebar({ role }: SidebarProps) {
         )}
       >
         <div className="flex items-center justify-between p-3 border-b">
-          {!collapsed && <span className="font-semibold text-sm">School Admin</span>}
+          {!collapsed && <span className="font-semibold text-sm">Kashmir Grammer School</span>}
           <Button
             variant="ghost"
             size="icon"

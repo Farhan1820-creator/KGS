@@ -46,9 +46,16 @@ const TeacherDashboard = async ({ name }: TeacherDashboardProps) => {
 
   return (
     <div className="page-shell space-y-6">
+
+      <div className="text-3xl text-center py-6 w-full flex items-center justify-center">
+        <h2>Welcome
+          <span  className="text-primary font-bold"> {name ? `, ${name}` : ""}
+            </span>
+          </h2>
+      </div>
       {attendanceCard ?? (
         <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-          Your employee profile isn't set up yet, so check-in/check-out isn't available.{" "}
+          Your employee profile isn&apos;t set up yet, so check-in/check-out isn&apos;t available.{" "}
           Contact the admin, or see the{" "}
           <Link href="/payroll" className="underline">
             Payroll
@@ -56,10 +63,6 @@ const TeacherDashboard = async ({ name }: TeacherDashboardProps) => {
           page.
         </div>
       )}
-
-      <div className="text-3xl text-center py-6 w-full flex items-center justify-center">
-        <h2>Welcome{name ? `, ${name}` : ""}</h2>
-      </div>
     </div>
   );
 };

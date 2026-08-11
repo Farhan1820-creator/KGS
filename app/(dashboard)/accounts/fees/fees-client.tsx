@@ -150,7 +150,7 @@ export function FeesClient({
 
       {/* Filters header */}
       <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
-        <Select value={range} onValueChange={(v) => handleRangeChange(v as FeeRange)}>
+        <Select value={range} onValueChange={(v:string | null) => handleRangeChange(v as FeeRange)}>
           <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
@@ -171,7 +171,7 @@ export function FeesClient({
           title="Pick a specific month"
         />
 
-        <Select value={classId ?? "all"} onValueChange={(v) => handleClassChange(v ?? "all")}>
+        <Select value={classId ?? "all"} onValueChange={(v:string | null) => handleClassChange(v ?? "all")}>
           <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="All classes" />
           </SelectTrigger>
@@ -185,7 +185,7 @@ export function FeesClient({
           </SelectContent>
         </Select>
 
-        <Select value={studentId ?? "all"} onValueChange={(v) => handleStudentChange(v ?? "all")}>
+        <Select value={studentId ?? "all"} onValueChange={(v:string | null) => handleStudentChange(v ?? "all")}>
           <SelectTrigger className="w-full sm:w-52">
             <SelectValue placeholder="All students" />
           </SelectTrigger>

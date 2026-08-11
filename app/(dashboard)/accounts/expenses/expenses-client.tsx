@@ -147,7 +147,7 @@ export function ExpensesClient({
 
       {/* Filters header */}
       <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
-<Select value={range} onValueChange={(v: string) => handleRangeChange(v as ExpenseRange)}>
+<Select value={range} onValueChange={(v: string | null) => handleRangeChange(v as ExpenseRange)}>
             <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
@@ -168,7 +168,7 @@ export function ExpensesClient({
           title="Pick a specific date"
         />
 
-<Select value={categoryId ?? "all"} onValueChange={(v: string) => handleCategoryChange(v ?? "all")}>
+<Select value={categoryId ?? "all"} onValueChange={(v: string | null) => handleCategoryChange(v ?? "all")}>
             <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
@@ -182,7 +182,7 @@ export function ExpensesClient({
           </SelectContent>
         </Select>
 
-<Select value={subCategoryId ?? "all"} onValueChange={(v: string) => handleSubCategoryChange(v ?? "all")}>
+<Select value={subCategoryId ?? "all"} onValueChange={(v: string | null) => handleSubCategoryChange(v ?? "all")}>
             <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All sub-categories" />
           </SelectTrigger>

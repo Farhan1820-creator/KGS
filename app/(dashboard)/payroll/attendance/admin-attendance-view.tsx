@@ -55,7 +55,7 @@ export function AdminAttendanceView({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Input type="month" value={selectedMonth} onChange={(e) => applyMonth(e.target.value)} className="w-44" />
-          <Select value={employeeFilter} onValueChange={(v) => setEmployeeFilter(v ?? "all")}>
+          <Select value={employeeFilter} onValueChange={(v:string | null) => setEmployeeFilter(v ?? "all")}>
             <SelectTrigger className="w-52">
               <SelectValue placeholder="All employees" />
             </SelectTrigger>

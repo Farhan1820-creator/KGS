@@ -46,7 +46,7 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
             <Select
               key={f.key}
               value={values[f.key] || "all"}
-              onValueChange={(v) => onChange(f.key, v === "all" ? "" : v ?? "")}
+              onValueChange={(v:string | null) => onChange(f.key, v === "all" ? "" : v ?? "")}
             >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder={f.placeholder} />

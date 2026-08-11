@@ -129,7 +129,7 @@ export function ExpenseDialog({ open, onOpenChange, categories, subCategories, e
               render={({ field }) => (
                 <Select
                   value={field.value}
-                  onValueChange={(v: string) => {
+                  onValueChange={(v: string | null) => {
   field.onChange(v);
   setValue("subCategoryId", "");
 }}
