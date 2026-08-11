@@ -67,7 +67,7 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<StudentFormValues>({
-    resolver: zodResolver(isEdit ? studentUpdateSchema : studentSchema) as Resolver<StudentFormValues>,
+    resolver: zodResolver(isEdit ? studentUpdateSchema : studentSchema) as unknown as Resolver<StudentFormValues>,
     defaultValues: emptyDefaults,
   });
 
