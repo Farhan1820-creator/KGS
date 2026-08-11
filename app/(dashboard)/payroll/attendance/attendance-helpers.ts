@@ -41,19 +41,24 @@ export function isDateWithinLeave(date: string, leave: { fromDate: string; toDat
   return date >= leave.fromDate && date <= leave.toDate;
 }
 
-// Status from minutes worked vs the employee's required shift, once checked out.
-export function statusFromMinutes(minutesWorked: number, shiftHours: number): AttendanceStatus {
-  const requiredMinutes = shiftHours * 60;
-  if (minutesWorked >= requiredMinutes) return "present";
-  if (minutesWorked >= requiredMinutes / 2) return "half_day";
+// Status from seconds worked vs the employee's required shift, once checked out.
+export function statusFromSeconds(secondsWorked: number, shiftHours: number): AttendanceStatus {
+  const requiredSeconds = shiftHours * 3600;
+  if (secondsWorked >= requiredSeconds) return "present";
+  if (secondsWorked >= requiredSeconds / 2) return "half_day";
   return "absent";
 }
 
-export function formatMinutes(minutes: number | null): string {
-  if (!minutes || minutes <= 0) return "—";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return m ? `${h}h ${m}m` : `${h}h`;
+export function formatDuration(seconds: number | null): string {
+  if (!seconds || seconds <= 0) return "—";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts: string[] = [];
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  if (s || parts.length === 0) parts.push(`${s}s`);
+  return parts.join(" ");
 }
 
 export const WEEKDAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -72,7 +77,7 @@ type RawAttendanceRecord = {
   date: string;
   checkIn: Date | string | null;
   checkOut: Date | string | null;
-  hoursWorked: number | null;
+  secondsWorked: number | null;
   status: AttendanceStatus;
 };
 
@@ -86,7 +91,7 @@ export type ReportRow = {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
-  hoursWorked: number | null;
+  secondsWorked: number | null;
   status: AttendanceStatus;
 };
 
@@ -123,7 +128,7 @@ export function buildAttendanceReport(
           date,
           checkIn: formatTime(existing.checkIn),
           checkOut: formatTime(existing.checkOut),
-          hoursWorked: existing.hoursWorked,
+          secondsWorked: existing.secondsWorked,
           status: existing.status,
         });
         continue;
@@ -138,11 +143,102 @@ export function buildAttendanceReport(
         date,
         checkIn: null,
         checkOut: null,
-        hoursWorked: null,
+        secondsWorked: null,
         status: onLeave ? "leave" : "absent",
       });
     }
   }
 
   return rows.sort((a, b) => (a.date === b.date ? a.employeeName.localeCompare(b.employeeName) : b.date.localeCompare(a.date)));
+}
+
+// ---- Salary calculation --------------------------------------------------
+// Basic salary is prorated per working day (basicSalary / workingDaysInMonth),
+// then each day's earned amount is scaled by secondsWorked / requiredSeconds
+// (capped at 1, so overtime doesn't earn extra) for second-level precision.
+// Approved leave days count as a full paid day. Allowances are fixed and
+// always paid in full, regardless of attendance.
+
+export type SalaryBreakdown = {
+  employeeId: number;
+  employeeName: string;
+  designation: string;
+  basicSalary: number;
+  allowances: number;
+  workingDaysInMonth: number;
+  daysPresent: number;
+  daysHalfDay: number;
+  daysAbsent: number;
+  daysLeave: number;
+  totalSecondsWorked: number;
+  requiredSecondsPerDay: number;
+  earnedBasic: number; // rounded to nearest currency unit
+  totalSalary: number; // earnedBasic + allowances
+};
+
+export function calculateSalary(
+  employee: { id: number; name: string; designation: string; basicSalary: number; allowances: number; shiftHours: number },
+  month: string,
+  records: RawAttendanceRecord[],
+  offDays: Set<number>,
+  approvedLeaves: { fromDate: string; toDate: string }[]
+): SalaryBreakdown {
+  const dates = datesInMonth(month);
+  const workingDates = dates.filter((d) => !isOffDay(d, offDays));
+  const workingDaysInMonth = workingDates.length || 1; // avoid div-by-zero
+  const requiredSecondsPerDay = employee.shiftHours * 3600;
+  const dailyRate = employee.basicSalary / workingDaysInMonth;
+
+  let daysPresent = 0;
+  let daysHalfDay = 0;
+  let daysAbsent = 0;
+  let daysLeave = 0;
+  let totalSecondsWorked = 0;
+  let earnedBasic = 0;
+
+  for (const date of workingDates) {
+    const record = records.find((r) => r.employeeId === employee.id && r.date === date);
+
+    if (record) {
+      const seconds = record.secondsWorked ?? 0;
+      totalSecondsWorked += seconds;
+
+      if (record.status === "leave") {
+        daysLeave++;
+        earnedBasic += dailyRate; // approved leave paid in full
+      } else {
+        const fraction = Math.min(1, requiredSecondsPerDay > 0 ? seconds / requiredSecondsPerDay : 0);
+        earnedBasic += dailyRate * fraction;
+        if (record.status === "present") daysPresent++;
+        else if (record.status === "half_day") daysHalfDay++;
+        else daysAbsent++;
+      }
+      continue;
+    }
+
+    const onLeave = approvedLeaves.some((l) => isDateWithinLeave(date, l));
+    if (onLeave) {
+      daysLeave++;
+      earnedBasic += dailyRate;
+    } else {
+      daysAbsent++;
+    }
+  }
+
+  return {
+    employeeId: employee.id,
+    employeeName: employee.name,
+    designation: employee.designation,
+    basicSalary: employee.basicSalary,
+    allowances: employee.allowances,
+    workingDaysInMonth,
+    daysPresent,
+    daysHalfDay,
+    daysAbsent,
+    daysLeave,
+    totalSecondsWorked,
+    requiredSecondsPerDay,
+    earnedBasic: Math.round(earnedBasic),
+    totalSalary: Math.round(earnedBasic) + employee.allowances,
+  };
 }

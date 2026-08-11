@@ -5,10 +5,11 @@ import { db } from "@/db";
 import { attendance, employees, leaveRequests } from "@/db/schema";
 import { eq, and, like } from "drizzle-orm";
 import { PayrollTabs } from "./payroll-tabs";
-import { PayrollPlaceholder } from "./payroll/payroll-placeholder";
+import { SalaryView } from "./payroll/salary-view";
+import { MySalaryView } from "./payroll/my-salary-view";
 import { AdminAttendanceView } from "./attendance/admin-attendance-view";
 import { MyAttendanceView } from "./attendance/my-attendance-view";
-import { buildAttendanceReport, currentMonth, todayString } from "./attendance/attendance-helpers";
+import { buildAttendanceReport, calculateSalary, currentMonth, todayString } from "./attendance/attendance-helpers";
 import type { PendingLeaveRow } from "./attendance/leave-approvals";
 import type { EmployeeRow } from "./attendance/employees-panel";
 
@@ -35,6 +36,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
   const offDaysSet = new Set(offDayRows.map((o) => o.dayOfWeek));
 
   let attendanceContent: ReactNode;
+  let payrollContent: ReactNode;
 
   if (role === "admin") {
     const [employeeRows, monthAttendance, approvedLeaves, pendingLeaveRows] = await Promise.all([
@@ -50,17 +52,19 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
 
     const employeeList = employeeRows.map((e) => ({ id: e.id, name: e.user.name, designation: e.designation }));
 
+    const rawRecords = monthAttendance.map((a) => ({
+      employeeId: a.employeeId,
+      date: a.date,
+      checkIn: a.checkIn,
+      checkOut: a.checkOut,
+      secondsWorked: a.secondsWorked,
+      status: a.status,
+    }));
+
     const records = buildAttendanceReport(
       employeeList,
       month,
-      monthAttendance.map((a) => ({
-        employeeId: a.employeeId,
-        date: a.date,
-        checkIn: a.checkIn,
-        checkOut: a.checkOut,
-        hoursWorked: a.hoursWorked,
-        status: a.status,
-      })),
+      rawRecords,
       offDaysSet,
       approvedLeaves.map((l) => ({ employeeId: l.employeeId, fromDate: l.fromDate, toDate: l.toDate }))
     );
@@ -93,15 +97,36 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         currentOffDays={Array.from(offDaysSet)}
       />
     );
+
+    const salaries = employeeRows.map((e) =>
+      calculateSalary(
+        {
+          id: e.id,
+          name: e.user.name,
+          designation: e.designation,
+          basicSalary: e.basicSalary,
+          allowances: e.allowances,
+          shiftHours: e.shiftHours,
+        },
+        month,
+        rawRecords,
+        offDaysSet,
+        approvedLeaves.filter((l) => l.employeeId === e.id).map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
+      )
+    );
+
+    payrollContent = <SalaryView month={month} salaries={salaries} />;
   } else {
     const employee = await db.query.employees.findFirst({ where: eq(employees.userId, Number(session.user.id)) });
 
     if (!employee) {
-      attendanceContent = (
+      const emptyState = (
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
           Your employee profile isn't set up yet. Contact the admin.
         </div>
       );
+      attendanceContent = emptyState;
+      payrollContent = emptyState;
     } else {
       const [attendanceRows, myLeaves] = await Promise.all([
         db.query.attendance.findMany({
@@ -120,17 +145,19 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         .filter((l) => l.status === "approved")
         .map((l) => ({ employeeId: employee.id, fromDate: l.fromDate, toDate: l.toDate }));
 
+      const rawRecords = attendanceRows.map((a) => ({
+        employeeId: a.employeeId,
+        date: a.date,
+        checkIn: a.checkIn,
+        checkOut: a.checkOut,
+        secondsWorked: a.secondsWorked,
+        status: a.status,
+      }));
+
       const history = buildAttendanceReport(
         [{ id: employee.id, name: "", designation: "" }],
         month,
-        attendanceRows.map((a) => ({
-          employeeId: a.employeeId,
-          date: a.date,
-          checkIn: a.checkIn,
-          checkOut: a.checkOut,
-          hoursWorked: a.hoursWorked,
-          status: a.status,
-        })),
+        rawRecords,
         offDaysSet,
         approvedOwnLeaves
       );
@@ -140,21 +167,39 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           shiftHours={employee.shiftHours}
           today={{
             checkIn: todayRecord?.checkIn ? new Date(todayRecord.checkIn).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : null,
+            checkInAt: todayRecord?.checkIn ? new Date(todayRecord.checkIn).toISOString() : null,
             checkOut: todayRecord?.checkOut ? new Date(todayRecord.checkOut).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : null,
-            hoursWorked: todayRecord?.hoursWorked ?? null,
+            secondsWorked: todayRecord?.secondsWorked ?? null,
             status: todayRecord?.status ?? null,
           }}
           history={history}
           leaves={myLeaves.map((l) => ({ id: l.id, fromDate: l.fromDate, toDate: l.toDate, reason: l.reason, status: l.status }))}
         />
       );
+
+      const salary = calculateSalary(
+        {
+          id: employee.id,
+          name: session.user.name ?? "",
+          designation: employee.designation,
+          basicSalary: employee.basicSalary,
+          allowances: employee.allowances,
+          shiftHours: employee.shiftHours,
+        },
+        month,
+        rawRecords,
+        offDaysSet,
+        approvedOwnLeaves.map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
+      );
+
+      payrollContent = <MySalaryView month={month} salary={salary} />;
     }
   }
 
   return (
     <div className="page-shell space-y-4">
       <h2 className="text-2xl font-semibold">Payroll</h2>
-      <PayrollTabs tab={tab} payrollContent={<PayrollPlaceholder />} attendanceContent={attendanceContent} />
+      <PayrollTabs tab={tab} payrollContent={payrollContent} attendanceContent={attendanceContent} />
     </div>
   );
 }

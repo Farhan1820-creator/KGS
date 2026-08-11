@@ -212,7 +212,7 @@ export const attendance = pgTable(
     date: varchar("date", { length: 10 }).notNull(), // "YYYY-MM-DD"
     checkIn: timestamp("check_in"),
     checkOut: timestamp("check_out"),
-    hoursWorked: integer("hours_worked"), // minutes worked, computed on check-out (named hours for readability but stored as minutes)
+    secondsWorked: integer("seconds_worked"), // seconds worked, computed on check-out (second-level precision)
     status: attendanceStatusEnum("status").notNull().default("absent"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

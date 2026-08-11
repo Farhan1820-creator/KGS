@@ -1,31 +1,46 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogIn, LogOut, Clock } from "lucide-react";
 import { checkIn, checkOut } from "./attendance-actions";
-import { formatMinutes, STATUS_LABELS, type AttendanceStatus } from "./attendance-helpers";
+import { formatDuration, STATUS_LABELS, type AttendanceStatus } from "./attendance-helpers";
 
 interface SelfAttendanceCardProps {
   todayCheckIn: string | null;
+  todayCheckInAt: string | null; // ISO timestamp, used to drive the live timer
   todayCheckOut: string | null;
-  todayHoursWorked: number | null;
+  todaySecondsWorked: number | null;
   todayStatus: AttendanceStatus | null;
   shiftHours: number;
 }
 
 export function SelfAttendanceCard({
   todayCheckIn,
+  todayCheckInAt,
   todayCheckOut,
-  todayHoursWorked,
+  todaySecondsWorked,
   todayStatus,
   shiftHours,
 }: SelfAttendanceCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [liveSeconds, setLiveSeconds] = useState(0);
+
+  // Live ticking elapsed-time counter while checked in and not yet checked out.
+  useEffect(() => {
+    if (!todayCheckInAt || todayCheckOut) return;
+
+    const checkInMs = new Date(todayCheckInAt).getTime();
+    const tick = () => setLiveSeconds(Math.max(0, Math.floor((Date.now() - checkInMs) / 1000)));
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [todayCheckInAt, todayCheckOut]);
 
   function handleCheckIn() {
     startTransition(async () => {
@@ -51,6 +66,9 @@ export function SelfAttendanceCard({
     });
   }
 
+  const isLive = !!todayCheckInAt && !todayCheckOut;
+  const displaySeconds = isLive ? liveSeconds : todaySecondsWorked;
+
   return (
     <div className="rounded-lg border p-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -71,8 +89,8 @@ export function SelfAttendanceCard({
           <p className="font-medium">{todayCheckOut ?? "—"}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Hours Worked</p>
-          <p className="font-medium">{formatMinutes(todayHoursWorked)}</p>
+          <p className="text-xs text-muted-foreground">{isLive ? "Time Worked (live)" : "Time Worked"}</p>
+          <p className={`font-medium tabular-nums ${isLive ? "text-primary" : ""}`}>{formatDuration(displaySeconds)}</p>
         </div>
       </div>
 

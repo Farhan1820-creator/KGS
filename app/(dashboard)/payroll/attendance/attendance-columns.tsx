@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { formatMinutes, STATUS_LABELS, type AttendanceStatus } from "./attendance-helpers";
+import { formatDuration, STATUS_LABELS, type AttendanceStatus } from "./attendance-helpers";
 
 export type AttendanceRow = {
   key: string; // `${employeeId}-${date}`
@@ -11,7 +11,7 @@ export type AttendanceRow = {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
-  hoursWorked: number | null; // minutes
+  secondsWorked: number | null; // seconds
   status: AttendanceStatus;
 };
 
@@ -29,9 +29,9 @@ export const adminAttendanceColumns: ColumnDef<AttendanceRow>[] = [
   { accessorKey: "checkIn", header: "Check In", cell: ({ row }) => row.original.checkIn ?? "—" },
   { accessorKey: "checkOut", header: "Check Out", cell: ({ row }) => row.original.checkOut ?? "—" },
   {
-    accessorKey: "hoursWorked",
+    accessorKey: "secondsWorked",
     header: "Hours Worked",
-    cell: ({ row }) => formatMinutes(row.original.hoursWorked),
+    cell: ({ row }) => formatDuration(row.original.secondsWorked),
   },
   {
     accessorKey: "status",
@@ -45,9 +45,9 @@ export const myAttendanceColumns: ColumnDef<AttendanceRow>[] = [
   { accessorKey: "checkIn", header: "Check In", cell: ({ row }) => row.original.checkIn ?? "—" },
   { accessorKey: "checkOut", header: "Check Out", cell: ({ row }) => row.original.checkOut ?? "—" },
   {
-    accessorKey: "hoursWorked",
+    accessorKey: "secondsWorked",
     header: "Hours Worked",
-    cell: ({ row }) => formatMinutes(row.original.hoursWorked),
+    cell: ({ row }) => formatDuration(row.original.secondsWorked),
   },
   {
     accessorKey: "status",

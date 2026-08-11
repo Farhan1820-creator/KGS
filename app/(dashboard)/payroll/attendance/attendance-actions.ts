@@ -7,7 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
-import { todayString, statusFromMinutes } from "./attendance-helpers";
+import { todayString, statusFromSeconds } from "./attendance-helpers";
 import {
   leaveRequestSchema,
   employeeSchema,
@@ -78,12 +78,12 @@ export async function checkOut(): Promise<ActionResult<Record<string, never>>> {
     }
 
     const checkOutTime = new Date();
-    const minutesWorked = Math.max(0, Math.round((checkOutTime.getTime() - new Date(record.checkIn).getTime()) / 60000));
-    const status = statusFromMinutes(minutesWorked, employee?.shiftHours ?? 8);
+    const secondsWorked = Math.max(0, Math.round((checkOutTime.getTime() - new Date(record.checkIn).getTime()) / 1000));
+    const status = statusFromSeconds(secondsWorked, employee?.shiftHours ?? 8);
 
     await db
       .update(attendance)
-      .set({ checkOut: checkOutTime, hoursWorked: minutesWorked, status })
+      .set({ checkOut: checkOutTime, secondsWorked, status })
       .where(eq(attendance.id, record.id));
 
     revalidatePath("/payroll");

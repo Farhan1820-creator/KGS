@@ -14,8 +14,9 @@ interface MyAttendanceViewProps {
   shiftHours: number;
   today: {
     checkIn: string | null;
+    checkInAt: string | null;
     checkOut: string | null;
-    hoursWorked: number | null;
+    secondsWorked: number | null;
     status: AttendanceStatus | null;
   };
   history: AttendanceRow[];
@@ -30,8 +31,9 @@ export function MyAttendanceView({ shiftHours, today, history, leaves }: MyAtten
       <SelfAttendanceCard
         shiftHours={shiftHours}
         todayCheckIn={today.checkIn}
+        todayCheckInAt={today.checkInAt}
         todayCheckOut={today.checkOut}
-        todayHoursWorked={today.hoursWorked}
+        todaySecondsWorked={today.secondsWorked}
         todayStatus={today.status}
       />
 
