@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
@@ -67,7 +67,7 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<StudentFormValues>({
-    resolver: zodResolver(isEdit ? studentUpdateSchema : studentSchema),
+    resolver: zodResolver(isEdit ? studentUpdateSchema : studentSchema) as Resolver<StudentFormValues>,
     defaultValues: emptyDefaults,
   });
 
