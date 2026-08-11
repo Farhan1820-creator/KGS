@@ -161,7 +161,7 @@ export function CategoryDialog({ open, onOpenChange, categories, subCategories, 
           <TabsContent value="subcategories" className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <Label>Category</Label>
-              <Select value={subCategoryId} onValueChange={setSubCategoryId}>
+              <Select value={subCategoryId} onValueChange={(value) => setSubCategoryId(value ?? "")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
