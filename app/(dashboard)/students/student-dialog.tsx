@@ -94,10 +94,11 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
 
   // Nice-to-have: when creating a new student and a class is picked, prefill
   // the fee with that class's default so the admin only overrides when needed.
-  function handleClassChange(value: string, onChange: (v: string) => void) {
-    onChange(value);
+  function handleClassChange(value: string | null, onChange: (v: string) => void) {
+    const v = value ?? "";
+    onChange(v);
     if (!isEdit && !feeTouched) {
-      const def = structureMap.get(Number(value));
+      const def = structureMap.get(Number(v));
       if (def) setValue("fee", String(def));
     }
   }
