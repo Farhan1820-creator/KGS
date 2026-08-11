@@ -1,0 +1,101 @@
+"use client";
+
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { LogIn, LogOut, Clock } from "lucide-react";
+import { checkIn, checkOut } from "./attendance-actions";
+import { formatMinutes, STATUS_LABELS, type AttendanceStatus } from "./attendance-helpers";
+
+interface SelfAttendanceCardProps {
+  todayCheckIn: string | null;
+  todayCheckOut: string | null;
+  todayHoursWorked: number | null;
+  todayStatus: AttendanceStatus | null;
+  shiftHours: number;
+}
+
+export function SelfAttendanceCard({
+  todayCheckIn,
+  todayCheckOut,
+  todayHoursWorked,
+  todayStatus,
+  shiftHours,
+}: SelfAttendanceCardProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function handleCheckIn() {
+    startTransition(async () => {
+      const result = await checkIn();
+      if (!result.success) {
+        toast.error(result.errors.root?.[0] ?? "Could not check in");
+        return;
+      }
+      toast.success("Checked in");
+      router.refresh();
+    });
+  }
+
+  function handleCheckOut() {
+    startTransition(async () => {
+      const result = await checkOut();
+      if (!result.success) {
+        toast.error(result.errors.root?.[0] ?? "Could not check out");
+        return;
+      }
+      toast.success("Checked out");
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="rounded-lg border p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-medium">Today's Attendance</h3>
+          <p className="text-xs text-muted-foreground">Shift requirement: {shiftHours}h</p>
+        </div>
+        {todayStatus && <Badge variant="outline">{STATUS_LABELS[todayStatus]}</Badge>}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-6 text-sm">
+        <div>
+          <p className="text-xs text-muted-foreground">Check In</p>
+          <p className="font-medium">{todayCheckIn ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Check Out</p>
+          <p className="font-medium">{todayCheckOut ?? "—"}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Hours Worked</p>
+          <p className="font-medium">{formatMinutes(todayHoursWorked)}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button onClick={handleCheckIn} disabled={isPending || !!todayCheckIn} size="sm">
+          <LogIn className="h-4 w-4 mr-1" />
+          Check In
+        </Button>
+        <Button
+          onClick={handleCheckOut}
+          disabled={isPending || !todayCheckIn || !!todayCheckOut}
+          variant="outline"
+          size="sm"
+        >
+          <LogOut className="h-4 w-4 mr-1" />
+          Check Out
+        </Button>
+        {!todayCheckIn && (
+          <span className="flex items-center text-xs text-muted-foreground gap-1">
+            <Clock className="h-3 w-3" /> Not checked in yet today
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}

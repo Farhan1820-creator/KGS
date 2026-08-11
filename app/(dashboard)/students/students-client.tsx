@@ -4,17 +4,20 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageToolbar, FilterConfig } from "@/components/layout/page-toolbar";
 import { DataTable } from "@/components/layout/data-table";
-import { studentColumns, StudentRow } from "./student-columns";
-import { StudentDialog } from "./student-dialog";
+import { getStudentColumns, StudentRow } from "./student-columns";
+import { StudentDialog, StudentEditTarget } from "./student-dialog";
 
 interface StudentsClientProps {
   initialData: StudentRow[];
   classes: { id: number; name: string }[];
+  feeStructures: { classId: number; amount: number }[];
+  currentMonth: string;
 }
 
-export function StudentsClient({ initialData, classes }: StudentsClientProps) {
+export function StudentsClient({ initialData, classes, feeStructures, currentMonth }: StudentsClientProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<StudentEditTarget | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
 
   const filterConfig: FilterConfig[] = [
@@ -38,23 +41,51 @@ export function StudentsClient({ initialData, classes }: StudentsClientProps) {
     );
   }, [initialData, filters]);
 
+  function handleAdd() {
+    setEditTarget(null);
+    setDialogOpen(true);
+  }
+
+  function handleEdit(row: StudentRow) {
+    setEditTarget({
+      id: row.id,
+      name: row.name,
+      contactNumber: row.contactNumber,
+      classId: row.classId,
+      rollNumber: row.rollNumber,
+      fee: row.fee,
+    });
+    setDialogOpen(true);
+  }
+
+  // Jumps to the fees page pre-filtered to this student, with the month
+  // filter set to the current month so the fee detail is right there.
+  function handleViewFeeDetails(row: StudentRow) {
+    const params = new URLSearchParams({ studentId: String(row.id), month: currentMonth });
+    router.push(`/accounts/fees?${params.toString()}`);
+  }
+
+  const columns = getStudentColumns({ onEdit: handleEdit, onViewFeeDetails: handleViewFeeDetails });
+
   return (
     <div className="page-shell space-y-4">
       <PageToolbar
         filters={filterConfig}
         values={filters}
         onChange={(key, value) => setFilters((f) => ({ ...f, [key]: value }))}
-        onAdd={() => setDialogOpen(true)}
+        onAdd={handleAdd}
         addLabel="Add Student"
       />
 
-      <DataTable columns={studentColumns} data={filteredData} />
+      <DataTable columns={columns} data={filteredData} />
 
       <StudentDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         classes={classes}
-        onCreated={() => router.refresh()}
+        feeStructures={feeStructures}
+        student={editTarget}
+        onSaved={() => router.refresh()}
       />
     </div>
   );

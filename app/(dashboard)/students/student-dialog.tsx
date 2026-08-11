@@ -1,10 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { studentSchema, StudentFormValues } from "./student-validation";
-import { createStudent } from "./student-actions";
+import {
+  studentSchema,
+  studentUpdateSchema,
+  StudentFormValues,
+  StudentUpdateFormValues,
+} from "./student-validation";
+import { createStudent, updateStudent } from "./student-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,68 +23,133 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Editing a student we already have on hand — id plus the fields the form
+// needs to pre-fill. Email/password aren't edited here.
+export interface StudentEditTarget {
+  id: number;
+  name: string;
+  contactNumber: string | null;
+  classId: number | null;
+  rollNumber: string | null;
+  fee: number | null;
+}
+
 interface StudentDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   classes: { id: number; name: string }[];
-  onCreated: () => void;
+  feeStructures?: { classId: number; amount: number }[];
+  onSaved: () => void;
+  student?: StudentEditTarget | null; // when set, dialog runs in edit mode
 }
 
-export function StudentDialog({ open, onOpenChange, classes, onCreated }: StudentDialogProps) {
+const emptyDefaults: StudentFormValues = {
+  name: "",
+  email: "",
+  password: "",
+  contactNumber: "",
+  classId: "",
+  rollNumber: "",
+  fee: "",
+};
+
+export function StudentDialog({ open, onOpenChange, classes, feeStructures = [], onSaved, student }: StudentDialogProps) {
+  const isEdit = Boolean(student);
+  const structureMap = new Map(feeStructures.map((s) => [s.classId, s.amount]));
+
   const {
     register,
     handleSubmit,
     reset,
     setError,
     control,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<StudentFormValues>({
-    resolver: zodResolver(studentSchema),
-    defaultValues: { name: "", email: "", password: "", contactNumber: "", classId: "", rollNumber: "" },
+    resolver: zodResolver(isEdit ? studentUpdateSchema : studentSchema),
+    defaultValues: emptyDefaults,
   });
 
+  // Reset the form whenever the dialog opens — either blank for create,
+  // or pre-filled for editing the selected student.
+  useEffect(() => {
+    if (!open) return;
+    if (student) {
+      reset({
+        name: student.name,
+        email: "",
+        password: "",
+        contactNumber: student.contactNumber ?? "",
+        classId: student.classId ? String(student.classId) : "",
+        rollNumber: student.rollNumber ?? "",
+        fee: student.fee ? String(student.fee) : "",
+      });
+    } else {
+      reset(emptyDefaults);
+    }
+  }, [open, student, reset]);
+
+  const feeTouched = watch("fee");
+
+  // Nice-to-have: when creating a new student and a class is picked, prefill
+  // the fee with that class's default so the admin only overrides when needed.
+  function handleClassChange(value: string, onChange: (v: string) => void) {
+    onChange(value);
+    if (!isEdit && !feeTouched) {
+      const def = structureMap.get(Number(value));
+      if (def) setValue("fee", String(def));
+    }
+  }
+
   async function onSubmit(values: StudentFormValues) {
-    const res = await createStudent(values);
+    const res = isEdit && student
+      ? await updateStudent(student.id, values as unknown as StudentUpdateFormValues)
+      : await createStudent(values);
 
     if (!res.success) {
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
-        setError(key as keyof StudentFormValues, { message: msgs?.[0] });
+        setError(key as keyof StudentFormValues, { message: (msgs as string[] | undefined)?.[0] });
       });
       toast.error(res.errors?.root?.[0] ?? "Please fix the errors and try again");
       return;
     }
 
-    toast.success("Student created");
-    reset();
+    toast.success(isEdit ? "Student updated" : "Student created");
+    reset(emptyDefaults);
     onOpenChange(false);
-    onCreated();
+    onSaved();
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Student</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Student" : "Add Student"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           <div className="space-y-1">
             <Label htmlFor="name">Full name</Label>
             <Input id="name" placeholder="e.g. Ali Raza" {...register("name")} />
             {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
-            {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-          </div>
+          {!isEdit && (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
+                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+              </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
-            {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-          </div>
+              <div className="space-y-1">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
+                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+              </div>
+            </>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="contactNumber">Contact number</Label>
@@ -92,7 +163,7 @@ export function StudentDialog({ open, onOpenChange, classes, onCreated }: Studen
               control={control}
               name="classId"
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select value={field.value} onValueChange={(v) => handleClassChange(v, field.onChange)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
@@ -115,8 +186,17 @@ export function StudentDialog({ open, onOpenChange, classes, onCreated }: Studen
             {errors.rollNumber && <p className="text-sm text-red-500">{errors.rollNumber.message}</p>}
           </div>
 
+          <div className="space-y-1">
+            <Label htmlFor="fee">Monthly fee (Rs.)</Label>
+            <Input id="fee" type="number" placeholder="Leave blank to use class fee" {...register("fee")} />
+            <p className="text-xs text-muted-foreground">
+              Optional — if left blank, this student uses their class&apos;s fee structure amount.
+            </p>
+            {errors.fee && <p className="text-sm text-red-500">{errors.fee.message}</p>}
+          </div>
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Student"}
+            {isSubmitting ? (isEdit ? "Saving..." : "Creating...") : isEdit ? "Save Changes" : "Create Student"}
           </Button>
         </form>
       </DialogContent>

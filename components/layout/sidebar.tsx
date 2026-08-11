@@ -6,21 +6,55 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Users, GraduationCap, Settings, ChevronLeft, ChevronRight, LogOut, BookOpen, X, BlocksIcon } from "lucide-react";
+import {
+  Users,
+  GraduationCap,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  LogOut,
+  BookOpen,
+  X,
+  BlocksIcon,
+  Wallet,
+  Receipt,
+} from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 
-const links = [
+type LinkItem = {
+  href: string;
+  label: string;
+  icon: typeof BlocksIcon;
+  children?: { href: string; label: string }[];
+};
+
+const links: LinkItem[] = [
   { href: "/", label: "Dashboard", icon: BlocksIcon },
   { href: "/students", label: "Students", icon: GraduationCap },
   { href: "/teachers", label: "Teachers", icon: Users },
   { href: "/diary", label: "Diary", icon: BookOpen },
+  {
+    href: "/accounts",
+    label: "Accounts",
+    icon: Wallet,
+    children: [
+      { href: "/accounts/fees", label: "Fees" },
+      { href: "/accounts/expenses", label: "Expenses" },
+      // { href: "/accounts/payroll", label: "Payroll" },          // Phase 3
+    ],
+  },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/payroll", label: "Payroll", icon: Wallet },
 ];
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const [openMenu, setOpenMenu] = useState<string | null>(
+    links.find((l) => l.children && pathname.startsWith(l.href))?.href ?? null
+  );
 
   return (
     <>
@@ -63,22 +97,72 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {links.map(({ href, label, icon: Icon }) => {
+          {links.map(({ href, label, icon: Icon, children }) => {
             const active = pathname.startsWith(href);
+
+            if (!children) {
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                    active ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                    collapsed && "md:justify-center md:px-0"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className={cn(collapsed && "md:hidden")}>{label}</span>
+                </Link>
+              );
+            }
+
+            const isOpen = collapsed ? active : openMenu === href;
+
             return (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                  active ? "bg-primary text-primary-foreground" : "hover:bg-muted",
-                  collapsed && "md:justify-center md:px-0"
+              <div key={href}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (collapsed) return; // collapsed rail: just navigate via children on hover-less setups
+                    setOpenMenu((cur) => (cur === href ? null : href));
+                  }}
+                  className={cn(
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
+                    active ? "bg-primary/10 text-foreground font-medium" : "hover:bg-muted",
+                    collapsed && "md:justify-center md:px-0"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className={cn("flex-1 text-left", collapsed && "md:hidden")}>{label}</span>
+                  {!collapsed && (
+                    <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", isOpen && "rotate-180")} />
+                  )}
+                </button>
+
+                {isOpen && (
+                  <div className={cn("mt-1 space-y-1 pl-4", collapsed && "md:hidden")}>
+                    {children.map((child) => {
+                      const childActive = pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
+                            childActive ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <Receipt className="h-3.5 w-3.5 shrink-0" />
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className={cn(collapsed && "md:hidden")}>{label}</span>
-              </Link>
+              </div>
             );
           })}
         </nav>
