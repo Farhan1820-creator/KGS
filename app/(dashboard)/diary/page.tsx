@@ -15,6 +15,7 @@ interface DiaryPageProps {
 export default async function DiaryPage({ searchParams }: DiaryPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (session.user.role === "staff") redirect("/");
 
   const { classId: classIdParam } = await searchParams;
   const role = session.user.role as "student" | "teacher" | "admin";

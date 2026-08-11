@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,44 +44,52 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(210_60%_97%)] px-4 py-10 sm:px-6">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm"
+        className="w-full max-w-sm rounded-2xl border bg-card p-6 shadow-md sm:p-8"
       >
-        <h1 className="text-xl font-semibold mb-6 text-center">
-          Kashmir Grammar School — Login
-        </h1>
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground font-semibold">
+            KG
+          </div>
+          <h1 className="text-lg font-semibold sm:text-xl">Kashmir Grammar School</h1>
+          <p className="text-sm text-muted-foreground">Sign in to your account</p>
+        </div>
 
         {error && (
-          <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+          <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
+            {error}
+          </p>
         )}
 
-        <label className="block text-sm mb-1">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full border rounded px-3 py-2 mb-4 text-sm"
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+          />
+        </div>
 
-        <label className="block text-sm mb-1">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full border rounded px-3 py-2 mb-6 text-sm"
-        />
+        <div className="mt-4 space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
+        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-black text-white rounded py-2 text-sm font-medium disabled:opacity-50"
-        >
+        <Button type="submit" disabled={loading} className="mt-6 w-full">
           {loading ? "Logging in..." : "Login"}
-        </button>
+        </Button>
       </form>
     </div>
   );

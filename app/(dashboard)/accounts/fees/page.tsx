@@ -1,3 +1,5 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { fees } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
@@ -17,6 +19,10 @@ interface FeesPageProps {
 }
 
 export default async function FeesPage({ searchParams }: FeesPageProps) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "admin") redirect("/");
+
   const params = await searchParams;
   const range: FeeRange = isFeeRange(params.range) ? params.range : "this_month";
   const month = params.month; // specific month overrides the range when set

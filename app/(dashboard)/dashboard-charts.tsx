@@ -16,7 +16,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const PIE_COLORS = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#db2777", "#65a30d"];
+const PIE_COLORS = ["#1E5FA8", "#4FA8E0", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#db2777"];
 
 function currencyTooltip(value: unknown): string {
   const n = typeof value === "number" ? value : Number(value);
@@ -80,7 +80,7 @@ export function NetCashFlowChart({ data }: { data: { month: string; collected: n
         <Legend />
         <Line type="monotone" dataKey="collected" name="Fees Collected" stroke="#16a34a" strokeWidth={2} dot={false} />
         <Line type="monotone" dataKey="expenses" name="Expenses" stroke="#dc2626" strokeWidth={2} dot={false} />
-        <Line type="monotone" dataKey="net" name="Net" stroke="#2563eb" strokeWidth={2} dot={false} />
+        <Line type="monotone" dataKey="net" name="Net" stroke="#1E5FA8" strokeWidth={2} dot={false} />
       </LineChart>
     </ResponsiveContainer>
   );

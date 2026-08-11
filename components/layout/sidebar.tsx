@@ -26,34 +26,41 @@ type LinkItem = {
   href: string;
   label: string;
   icon: typeof BlocksIcon;
+  roles: string[];
   children?: { href: string; label: string }[];
 };
 
 const links: LinkItem[] = [
-  { href: "/", label: "Dashboard", icon: BlocksIcon },
-  { href: "/students", label: "Students", icon: GraduationCap },
-  { href: "/teachers", label: "Teachers", icon: Users },
-  { href: "/diary", label: "Diary", icon: BookOpen },
+  { href: "/", label: "Dashboard", icon: BlocksIcon, roles: ["admin", "teacher", "student", "staff"] },
+  { href: "/students", label: "Students", icon: GraduationCap, roles: ["admin"] },
+  { href: "/teachers", label: "Teachers", icon: Users, roles: ["admin"] },
+  { href: "/diary", label: "Diary", icon: BookOpen, roles: ["admin", "teacher", "student"] },
   {
     href: "/accounts",
     label: "Accounts",
     icon: Wallet,
+    roles: ["admin"],
     children: [
       { href: "/accounts/fees", label: "Fees" },
       { href: "/accounts/expenses", label: "Expenses" },
       // { href: "/accounts/payroll", label: "Payroll" },          // Phase 3
     ],
   },
-  { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/payroll", label: "Payroll", icon: Wallet },
+  { href: "/settings", label: "Settings", icon: Settings, roles: ["admin"] },
+  { href: "/payroll", label: "Payroll", icon: Wallet, roles: ["admin", "teacher", "staff"] },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  role: string;
+}
+
+export function Sidebar({ role }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const { mobileOpen, setMobileOpen } = useSidebar();
+  const visibleLinks = links.filter((l) => l.roles.includes(role));
   const [openMenu, setOpenMenu] = useState<string | null>(
-    links.find((l) => l.children && pathname.startsWith(l.href))?.href ?? null
+    visibleLinks.find((l) => l.children && pathname.startsWith(l.href))?.href ?? null
   );
 
   return (
@@ -70,9 +77,9 @@ export function Sidebar() {
       <aside
         className={cn(
           "h-screen fixed md:sticky top-0 z-50 border-r bg-background transition-all duration-200 flex flex-col",
-          "w-60 md:w-auto",
+          "w-64 md:w-auto",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-          collapsed ? "md:w-16" : "md:w-60"
+          collapsed ? "md:w-16" : "md:w-64"
         )}
       >
         <div className="flex items-center justify-between p-3 border-b">
@@ -97,8 +104,8 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {links.map(({ href, label, icon: Icon, children }) => {
-            const active = pathname.startsWith(href);
+          {visibleLinks.map(({ href, label, icon: Icon, children }) => {
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
             if (!children) {
               return (
@@ -171,7 +178,7 @@ export function Sidebar() {
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm w-full text-left text-red-500 hover:bg-red-500/10 transition-colors",
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm w-full text-left text-destructive hover:bg-destructive/10 transition-colors",
               collapsed && "md:justify-center md:px-0"
             )}
           >

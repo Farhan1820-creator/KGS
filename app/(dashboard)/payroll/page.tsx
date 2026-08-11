@@ -122,7 +122,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     if (!employee) {
       const emptyState = (
         <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
-          Your employee profile isn't set up yet. Contact the admin.
+          Your employee profile isn&apos;t set up yet. Contact the admin.
         </div>
       );
       attendanceContent = emptyState;

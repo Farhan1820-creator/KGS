@@ -129,13 +129,13 @@ export function FeesClient({
 
   return (
     <div className="page-shell space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
             type="month"
             value={generateMonth}
             onChange={(e) => setGenerateMonth(e.target.value)}
-            className="w-44"
+            className="w-full sm:w-44"
           />
           <Button onClick={handleGenerate} disabled={isPending} size="sm">
             <Sparkles className="h-4 w-4 mr-1" />
@@ -149,9 +149,9 @@ export function FeesClient({
       </div>
 
       {/* Filters header */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
+      <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
         <Select value={range} onValueChange={(v) => handleRangeChange(v as FeeRange)}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent>
@@ -167,12 +167,12 @@ export function FeesClient({
           type="month"
           value={month ?? ""}
           onChange={(e) => handleMonthChange(e.target.value)}
-          className="w-44"
+          className="w-full sm:w-44"
           title="Pick a specific month"
         />
 
         <Select value={classId ?? "all"} onValueChange={(v) => handleClassChange(v ?? "all")}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="All classes" />
           </SelectTrigger>
           <SelectContent>
@@ -186,7 +186,7 @@ export function FeesClient({
         </Select>
 
         <Select value={studentId ?? "all"} onValueChange={(v) => handleStudentChange(v ?? "all")}>
-          <SelectTrigger className="w-52">
+          <SelectTrigger className="w-full sm:w-52">
             <SelectValue placeholder="All students" />
           </SelectTrigger>
           <SelectContent>
@@ -203,10 +203,10 @@ export function FeesClient({
           placeholder="Search by name or roll number"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-56"
+          className="w-full sm:w-56"
         />
 
-        <Button variant="ghost" size="sm" onClick={clearFilters}>
+        <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
           Clear
         </Button>
       </div>

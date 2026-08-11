@@ -134,7 +134,7 @@ export function ExpensesClient({
 
   return (
     <div className="page-shell space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <Button onClick={handleAdd} size="sm">
           <Plus className="h-4 w-4 mr-1" />
           Add Expense
@@ -146,9 +146,9 @@ export function ExpensesClient({
       </div>
 
       {/* Filters header */}
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
+      <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
         <Select value={range} onValueChange={(v) => handleRangeChange(v as ExpenseRange)}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent>
@@ -164,12 +164,12 @@ export function ExpensesClient({
           type="date"
           value={date ?? ""}
           onChange={(e) => handleDateChange(e.target.value)}
-          className="w-44"
+          className="w-full sm:w-44"
           title="Pick a specific date"
         />
 
         <Select value={categoryId ?? "all"} onValueChange={(v) => handleCategoryChange(v ?? "all")}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
           <SelectContent>
@@ -183,7 +183,7 @@ export function ExpensesClient({
         </Select>
 
         <Select value={subCategoryId ?? "all"} onValueChange={(v) => handleSubCategoryChange(v ?? "all")}>
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="All sub-categories" />
           </SelectTrigger>
           <SelectContent>
@@ -200,10 +200,10 @@ export function ExpensesClient({
           placeholder="Search by title or category"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-56"
+          className="w-full sm:w-56"
         />
 
-        <Button variant="ghost" size="sm" onClick={clearFilters}>
+        <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
           Clear
         </Button>
       </div>

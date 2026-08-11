@@ -15,6 +15,7 @@ export default async function DashboardPage() {
 if (role === "admin") return <AdminDashboard name={session.user.name ?? ""} />;
 if (role === "teacher") return <TeacherDashboard name={session.user.name ?? ""} />;
 if (role === "student") return <StudentDashboard name={session.user.name ?? ""} />;
+if (role === "staff") return <TeacherDashboard name={session.user.name ?? ""} />;
 
   redirect("/login");
 }

@@ -125,7 +125,7 @@ export function EmployeeDialog({ open, onOpenChange, editTarget, onSaved }: Empl
             {errors.designation && <p className="text-sm text-destructive">{errors.designation[0]}</p>}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Shift Hours</Label>
               <Input type="number" value={form.shiftHours} onChange={(e) => set("shiftHours", e.target.value)} />

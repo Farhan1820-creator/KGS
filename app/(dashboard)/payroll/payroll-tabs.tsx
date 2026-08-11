@@ -18,8 +18,8 @@ export function PayrollTabs({ tab, payrollContent, attendanceContent }: PayrollT
   }
 
   return (
-    <Tabs value={tab} onValueChange={handleChange}>
-      <TabsList>
+    <Tabs value={tab} onValueChange={handleChange} className="flex flex-col">
+      <TabsList >
         <TabsTrigger value="payroll">Payroll</TabsTrigger>
         <TabsTrigger value="attendance">Attendance</TabsTrigger>
       </TabsList>

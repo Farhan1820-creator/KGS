@@ -1,3 +1,5 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { expenses } from "@/db/schema";
 import { and, gte, lte, eq } from "drizzle-orm";
@@ -17,6 +19,10 @@ interface ExpensesPageProps {
 }
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "admin") redirect("/");
+
   const params = await searchParams;
   const range: ExpenseRange = isExpenseRange(params.range) ? params.range : "this_month";
   const date = params.date; // specific date overrides the range when set

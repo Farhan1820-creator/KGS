@@ -59,7 +59,7 @@ export function SettingsClient({ subjects, classes }: SettingsClientProps) {
 
   return (
     <div className="page-shell">
-      <Tabs defaultValue="subjects">
+      <Tabs defaultValue="subjects flex flex-col">
         <TabsList>
           <TabsTrigger value="subjects">Subjects</TabsTrigger>
           <TabsTrigger value="classes">Classes</TabsTrigger>

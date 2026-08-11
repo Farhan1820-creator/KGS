@@ -1,3 +1,5 @@
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { classes, fees } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,6 +13,10 @@ function currentMonth() {
 }
 
 export default async function StudentsPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "admin") redirect("/");
+
   const month = currentMonth();
 
   // one query with relations instead of separate user/class round-trips (see db/queries/students.ts)

@@ -6,7 +6,43 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+// Base UI's <Select.Value> shows the raw `value` unless <Select.Root items>
+// tells it how to map value -> label. Rather than pass `items` by hand at
+// every call site, we walk this Select's children once, collect every
+// {value, label} pair straight from the <SelectItem> elements already being
+// rendered, and hand that to the primitive automatically.
+function flattenToText(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return ""
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(flattenToText).join("")
+  if (React.isValidElement(node)) return flattenToText((node.props as { children?: React.ReactNode }).children)
+  return ""
+}
+
+function collectSelectItems(
+  node: React.ReactNode,
+  acc: { value: unknown; label: string }[] = []
+): { value: unknown; label: string }[] {
+  React.Children.forEach(node, (child) => {
+    if (!React.isValidElement(child)) return
+    const props = child.props as { value?: unknown; children?: React.ReactNode }
+    if (child.type === SelectItem) {
+      acc.push({ value: props.value, label: flattenToText(props.children) })
+    } else if (props.children) {
+      collectSelectItems(props.children, acc)
+    }
+  })
+  return acc
+}
+
+function Select({ children, ...props }: SelectPrimitive.Root.Props) {
+  const items = React.useMemo(() => collectSelectItems(children), [children])
+  return (
+    <SelectPrimitive.Root items={items.length ? items : undefined} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (
