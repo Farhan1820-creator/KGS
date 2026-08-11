@@ -69,8 +69,7 @@ export function FeeStructureDialog({ open, onOpenChange, classes, structures, on
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label>Class</Label>
-            <Select value={classId} onValueChange={(v) => handleClassChange(v ?? "")}>
-              <SelectTrigger>
+<Select value={classId} onValueChange={(v: string) => handleClassChange(v ?? "")}>              <SelectTrigger>
                 <SelectValue placeholder="Select a class" />
               </SelectTrigger>
               <SelectContent>
