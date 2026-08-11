@@ -171,7 +171,7 @@ export function FeesClient({
           title="Pick a specific month"
         />
 
-        <Select value={classId ?? "all"} onValueChange={handleClassChange}>
+        <Select value={classId ?? "all"} onValueChange={(v) => handleClassChange(v ?? "all")}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All classes" />
           </SelectTrigger>
@@ -185,7 +185,7 @@ export function FeesClient({
           </SelectContent>
         </Select>
 
-        <Select value={studentId ?? "all"} onValueChange={handleStudentChange}>
+        <Select value={studentId ?? "all"} onValueChange={(v) => handleStudentChange(v ?? "all")}>
           <SelectTrigger className="w-52">
             <SelectValue placeholder="All students" />
           </SelectTrigger>
