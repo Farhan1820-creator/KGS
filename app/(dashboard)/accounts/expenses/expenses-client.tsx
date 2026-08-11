@@ -168,7 +168,7 @@ export function ExpensesClient({
           title="Pick a specific date"
         />
 
-        <Select value={categoryId ?? "all"} onValueChange={handleCategoryChange}>
+        <Select value={categoryId ?? "all"} onValueChange={(v) => handleCategoryChange(v ?? "all")}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All categories" />
           </SelectTrigger>
@@ -182,7 +182,7 @@ export function ExpensesClient({
           </SelectContent>
         </Select>
 
-        <Select value={subCategoryId ?? "all"} onValueChange={handleSubCategoryChange}>
+        <Select value={subCategoryId ?? "all"} onValueChange={(v) => handleSubCategoryChange(v ?? "all")}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="All sub-categories" />
           </SelectTrigger>
