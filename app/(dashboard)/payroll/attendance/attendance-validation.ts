@@ -20,17 +20,32 @@ export const employeeSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   contactNumber: z.string().optional(),
   designation: z.string().min(2, "Designation is required"),
-  shiftHours: z.coerce.number().int().min(1, "Must be at least 1 hour").max(16, "Must be 16 hours or less"),
   basicSalary: z.coerce.number().int().min(0, "Cannot be negative"),
   allowances: z.coerce.number().int().min(0, "Cannot be negative").default(0),
 });
 export type EmployeeFormValues = z.infer<typeof employeeSchema>;
 
-// For editing an existing employee's pay/shift settings (no login fields).
+// For editing an existing employee's pay settings (no login fields).
 export const employeeSettingsSchema = z.object({
   designation: z.string().min(2, "Designation is required"),
-  shiftHours: z.coerce.number().int().min(1, "Must be at least 1 hour").max(16, "Must be 16 hours or less"),
   basicSalary: z.coerce.number().int().min(0, "Cannot be negative"),
   allowances: z.coerce.number().int().min(0, "Cannot be negative").default(0),
 });
 export type EmployeeSettingsFormValues = z.infer<typeof employeeSettingsSchema>;
+
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export const workScheduleSchema = z.object({
+  effectiveFrom: z.string().regex(dateRegex, "Select a valid date"),
+  label: z.string().optional(),
+  days: z
+    .array(
+      z.object({
+        dayOfWeek: z.number().int().min(0).max(6),
+        startTime: z.string().regex(timeRegex, "Invalid time"),
+        endTime: z.string().regex(timeRegex, "Invalid time"),
+      })
+    )
+    .min(1, "Select at least one working day"),
+});
+export type WorkScheduleFormValues = z.infer<typeof workScheduleSchema>;

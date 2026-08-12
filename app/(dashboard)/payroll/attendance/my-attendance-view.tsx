@@ -6,18 +6,9 @@ import { DataTable } from "@/components/layout/data-table";
 import { LeaveRequestDialog } from "./leave-request-dialog";
 import { MyLeaveList, MyLeaveRow } from "./my-leave-list";
 import { myAttendanceColumns, AttendanceRow } from "./attendance-columns";
-import { type AttendanceStatus } from "./attendance-helpers";
 import { Plus } from "lucide-react";
 
 interface MyAttendanceViewProps {
-  shiftHours: number;
-  today: {
-    checkIn: string | null;
-    checkInAt: string | null;
-    checkOut: string | null;
-    secondsWorked: number | null;
-    status: AttendanceStatus | null;
-  };
   history: AttendanceRow[];
   leaves: MyLeaveRow[];
 }

@@ -33,17 +33,59 @@ export function dayOfWeek(date: string): number {
   return new Date(y, m - 1, d).getDay(); // 0=Sunday..6=Saturday
 }
 
-export function isOffDay(date: string, offDays: Set<number>): boolean {
-  return offDays.has(dayOfWeek(date));
-}
-
 export function isDateWithinLeave(date: string, leave: { fromDate: string; toDate: string }): boolean {
   return date >= leave.fromDate && date <= leave.toDate;
 }
 
-// Status from seconds worked vs the employee's required shift, once checked out.
-export function statusFromSeconds(secondsWorked: number, shiftHours: number): AttendanceStatus {
-  const requiredSeconds = shiftHours * 3600;
+// ---- Work schedule (flexible, date-effective timetable) --------------------
+
+export type DaySchedule = { dayOfWeek: number; startTime: string; endTime: string };
+export type WorkSchedule = { id: number; effectiveFrom: string; label: string | null; days: DaySchedule[] };
+
+// Picks whichever schedule was actually in effect on `date` — the one with
+// the latest effectiveFrom that is still <= date. Lets admin change timings
+// going forward without altering how past attendance/salary is graded.
+export function getActiveSchedule(date: string, schedules: WorkSchedule[]): WorkSchedule | null {
+  const applicable = schedules.filter((s) => s.effectiveFrom <= date);
+  if (applicable.length === 0) return null;
+  return applicable.reduce((latest, s) => (s.effectiveFrom > latest.effectiveFrom ? s : latest));
+}
+
+// Returns this date's start/end timing, or null if it's a non-working day
+// under the schedule that was active on that date.
+export function getDaySchedule(date: string, schedules: WorkSchedule[]): DaySchedule | null {
+  const active = getActiveSchedule(date, schedules);
+  if (!active) return null;
+  return active.days.find((d) => d.dayOfWeek === dayOfWeek(date)) ?? null;
+}
+
+export function isWorkingDay(date: string, schedules: WorkSchedule[]): boolean {
+  return getDaySchedule(date, schedules) !== null;
+}
+
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+// Required seconds for a full day on this date, or null if it's a non-working day.
+export function requiredSecondsForDate(date: string, schedules: WorkSchedule[]): number | null {
+  const day = getDaySchedule(date, schedules);
+  if (!day) return null;
+  return Math.max(0, (timeToMinutes(day.endTime) - timeToMinutes(day.startTime)) * 60);
+}
+
+export function formatTimeLabel(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, "0")} ${period}`;
+}
+
+// Status from seconds worked vs the required seconds for that specific date
+// (from the schedule that was active then).
+export function statusFromSeconds(secondsWorked: number, requiredSeconds: number): AttendanceStatus {
+  if (requiredSeconds <= 0) return "present";
   if (secondsWorked >= requiredSeconds) return "present";
   if (secondsWorked >= requiredSeconds / 2) return "half_day";
   return "absent";
@@ -108,7 +150,7 @@ export function buildAttendanceReport(
   employees: { id: number; name: string; designation: string }[],
   month: string,
   records: RawAttendanceRecord[],
-  offDays: Set<number>,
+  schedules: WorkSchedule[],
   approvedLeaves: RawApprovedLeave[]
 ): ReportRow[] {
   const dates = datesInMonth(month);
@@ -116,7 +158,7 @@ export function buildAttendanceReport(
 
   for (const emp of employees) {
     for (const date of dates) {
-      if (isOffDay(date, offDays)) continue;
+      if (!isWorkingDay(date, schedules)) continue;
 
       const existing = records.find((r) => r.employeeId === emp.id && r.date === date);
       if (existing) {
@@ -171,22 +213,21 @@ export type SalaryBreakdown = {
   daysAbsent: number;
   daysLeave: number;
   totalSecondsWorked: number;
-  requiredSecondsPerDay: number;
+  totalRequiredSeconds: number; // sum of each working day's required seconds (varies day to day now)
   earnedBasic: number; // rounded to nearest currency unit
   totalSalary: number; // earnedBasic + allowances
 };
 
 export function calculateSalary(
-  employee: { id: number; name: string; designation: string; basicSalary: number; allowances: number; shiftHours: number },
+  employee: { id: number; name: string; designation: string; basicSalary: number; allowances: number },
   month: string,
   records: RawAttendanceRecord[],
-  offDays: Set<number>,
+  schedules: WorkSchedule[],
   approvedLeaves: { fromDate: string; toDate: string }[]
 ): SalaryBreakdown {
   const dates = datesInMonth(month);
-  const workingDates = dates.filter((d) => !isOffDay(d, offDays));
+  const workingDates = dates.filter((d) => isWorkingDay(d, schedules));
   const workingDaysInMonth = workingDates.length || 1; // avoid div-by-zero
-  const requiredSecondsPerDay = employee.shiftHours * 3600;
   const dailyRate = employee.basicSalary / workingDaysInMonth;
 
   let daysPresent = 0;
@@ -194,9 +235,12 @@ export function calculateSalary(
   let daysAbsent = 0;
   let daysLeave = 0;
   let totalSecondsWorked = 0;
+  let totalRequiredSeconds = 0;
   let earnedBasic = 0;
 
   for (const date of workingDates) {
+    const requiredSecondsForDay = requiredSecondsForDate(date, schedules) ?? 0;
+    totalRequiredSeconds += requiredSecondsForDay;
     const record = records.find((r) => r.employeeId === employee.id && r.date === date);
 
     if (record) {
@@ -207,7 +251,7 @@ export function calculateSalary(
         daysLeave++;
         earnedBasic += dailyRate; // approved leave paid in full
       } else {
-        const fraction = Math.min(1, requiredSecondsPerDay > 0 ? seconds / requiredSecondsPerDay : 0);
+        const fraction = Math.min(1, requiredSecondsForDay > 0 ? seconds / requiredSecondsForDay : 0);
         earnedBasic += dailyRate * fraction;
         if (record.status === "present") daysPresent++;
         else if (record.status === "half_day") daysHalfDay++;
@@ -237,7 +281,7 @@ export function calculateSalary(
     daysAbsent,
     daysLeave,
     totalSecondsWorked,
-    requiredSecondsPerDay,
+    totalRequiredSeconds,
     earnedBasic: Math.round(earnedBasic),
     totalSalary: Math.round(earnedBasic) + employee.allowances,
   };

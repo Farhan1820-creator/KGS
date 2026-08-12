@@ -2,20 +2,32 @@
 
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { users, teachers, employees, attendance, leaveRequests, offDays } from "@/db/schema";
+import { users, teachers, employees, attendance, leaveRequests, workSchedules, scheduleDays } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
-import { todayString, statusFromSeconds } from "./attendance-helpers";
+import { todayString, statusFromSeconds, requiredSecondsForDate, type WorkSchedule } from "./attendance-helpers";
 import {
   leaveRequestSchema,
   employeeSchema,
   employeeSettingsSchema,
+  workScheduleSchema,
   type LeaveRequestFormValues,
   type EmployeeFormValues,
   type EmployeeSettingsFormValues,
+  type WorkScheduleFormValues,
 } from "./attendance-validation";
+
+async function activeSchedules(): Promise<WorkSchedule[]> {
+  const rows = await db.query.workSchedules.findMany({ with: { days: true } });
+  return rows.map((r) => ({
+    id: r.id,
+    effectiveFrom: r.effectiveFrom,
+    label: r.label,
+    days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
+  }));
+}
 
 type ActionErrors<T extends Record<string, unknown>> = Partial<Record<keyof T | "root", string[]>>;
 type ActionResult<T extends Record<string, unknown>> =
@@ -65,10 +77,9 @@ export async function checkOut(): Promise<ActionResult<Record<string, never>>> {
 
   const today = todayString();
   try {
-    const [record, employee] = await Promise.all([
-      db.query.attendance.findFirst({ where: and(eq(attendance.employeeId, employeeId), eq(attendance.date, today)) }),
-      db.query.employees.findFirst({ where: eq(employees.id, employeeId), columns: { shiftHours: true } }),
-    ]);
+    const record = await db.query.attendance.findFirst({
+      where: and(eq(attendance.employeeId, employeeId), eq(attendance.date, today)),
+    });
 
     if (!record?.checkIn) {
       return { success: false, errors: { root: ["Check in first before checking out."] } };
@@ -79,7 +90,9 @@ export async function checkOut(): Promise<ActionResult<Record<string, never>>> {
 
     const checkOutTime = new Date();
     const secondsWorked = Math.max(0, Math.round((checkOutTime.getTime() - new Date(record.checkIn).getTime()) / 1000));
-    const status = statusFromSeconds(secondsWorked, employee?.shiftHours ?? 8);
+    const schedules = await activeSchedules();
+    const requiredSeconds = requiredSecondsForDate(today, schedules) ?? 8 * 3600; // fallback: 8h if no schedule configured
+    const status = statusFromSeconds(secondsWorked, requiredSeconds);
 
     await db
       .update(attendance)
@@ -155,18 +168,31 @@ export async function decideLeaveRequest(
   }
 }
 
-// ---- Off days (admin) -------------------------------------------------------
+// ---- Work schedule (admin) ---------------------------------------------------
 
-export async function setOffDays(days: number[]): Promise<ActionResult<Record<string, never>>> {
+// Adds a new schedule effective from a given date onward. Past attendance and
+// salary are unaffected — they keep whatever schedule was active on the day.
+export async function createWorkSchedule(formData: unknown): Promise<ActionResult<WorkScheduleFormValues>> {
+  const parsed = workScheduleSchema.safeParse(formData);
+  if (!parsed.success) {
+    return { success: false, errors: parsed.error.flatten().fieldErrors };
+  }
+  const { effectiveFrom, label, days } = parsed.data;
+
   try {
-    await db.delete(offDays);
-    if (days.length > 0) {
-      await db.insert(offDays).values(days.map((dayOfWeek) => ({ dayOfWeek })));
-    }
+    const [schedule] = await db
+      .insert(workSchedules)
+      .values({ effectiveFrom, label: label || null })
+      .returning({ id: workSchedules.id });
+
+    await db.insert(scheduleDays).values(
+      days.map((d) => ({ scheduleId: schedule.id, dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime }))
+    );
+
     revalidatePath("/payroll");
     return { success: true };
   } catch {
-    return { success: false, errors: { root: ["Could not update off days."] } };
+    return { success: false, errors: { root: ["Could not save the schedule."] } };
   }
 }
 
@@ -178,7 +204,7 @@ export async function createStaffEmployee(formData: unknown): Promise<ActionResu
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
-  const { name, email, password, contactNumber, designation, shiftHours, basicSalary, allowances } = parsed.data;
+  const { name, email, password, contactNumber, designation, basicSalary, allowances } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -193,7 +219,6 @@ export async function createStaffEmployee(formData: unknown): Promise<ActionResu
         userId: user.id,
         employeeType: "staff",
         designation,
-        shiftHours,
         basicSalary,
         allowances,
       });
@@ -243,7 +268,6 @@ export async function syncTeacherEmployees(): Promise<ActionResult<Record<string
         teacherId: t.id,
         employeeType: "teacher",
         designation: t.subject ? `${t.subject.name} Teacher` : "Teacher",
-        shiftHours: 8,
         basicSalary: 0,
         allowances: 0,
       });

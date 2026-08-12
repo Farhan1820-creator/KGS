@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { subjectSchema, SubjectFormValues } from "./subject-validation";
-import { createSubject } from "./settings-actions";
+import { createSubject, updateSubject } from "./settings-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +15,11 @@ interface SubjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  editTarget?: { id: number; name: string; code: string } | null;
 }
 
-export function SubjectDialog({ open, onOpenChange, onCreated }: SubjectDialogProps) {
+export function SubjectDialog({ open, onOpenChange, onCreated, editTarget }: SubjectDialogProps) {
+  const isEdit = !!editTarget;
   const {
     register,
     handleSubmit,
@@ -25,8 +28,12 @@ export function SubjectDialog({ open, onOpenChange, onCreated }: SubjectDialogPr
     formState: { errors, isSubmitting },
   } = useForm<SubjectFormValues>({ resolver: zodResolver(subjectSchema) });
 
+  useEffect(() => {
+    if (open) reset(editTarget ? { name: editTarget.name, code: editTarget.code } : { name: "", code: "" });
+  }, [open, editTarget, reset]);
+
   async function onSubmit(values: SubjectFormValues) {
-    const res = await createSubject(values);
+    const res = isEdit ? await updateSubject(editTarget!.id, values) : await createSubject(values);
 
     if (!res.success) {
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
@@ -36,7 +43,7 @@ export function SubjectDialog({ open, onOpenChange, onCreated }: SubjectDialogPr
       return;
     }
 
-    toast.success("Subject created");
+    toast.success(isEdit ? "Subject updated" : "Subject created");
     reset();
     onOpenChange(false);
     onCreated();
@@ -46,7 +53,7 @@ export function SubjectDialog({ open, onOpenChange, onCreated }: SubjectDialogPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Subject</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Subject" : "Add Subject"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -63,7 +70,7 @@ export function SubjectDialog({ open, onOpenChange, onCreated }: SubjectDialogPr
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Subject"}
+            {isSubmitting ? "Saving..." : isEdit ? "Save Changes" : "Create Subject"}
           </Button>
         </form>
       </DialogContent>

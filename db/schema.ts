@@ -30,7 +30,7 @@ export const students = pgTable("students", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   classId: integer("class_id").references(() => classes.id),
-  rollNumber: varchar("roll_number", { length: 20 }),
+  rollNumber: varchar("roll_number", { length: 20 }).unique(), // system-generated, e.g. "2026-STD-014"
   // Per-student monthly fee override. When set, this is used instead of the
   // class's fee structure amount at generation time — lets each student have
   // an individual fee (scholarships, discounts, custom plans, etc).
@@ -41,6 +41,7 @@ export const teachers = pgTable("teachers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   subjectId: integer("subject_id").references(() => subjects.id),
+  teacherId: varchar("teacher_id", { length: 20 }).unique(), // system-generated, e.g. "2026-TCH-007"
 });
 
 export const diaryEntries = pgTable("diary_entries", {
@@ -180,7 +181,6 @@ export const employees = pgTable("employees", {
   teacherId: integer("teacher_id").references(() => teachers.id, { onDelete: "set null" }), // set only for employeeType "teacher"
   employeeType: employeeTypeEnum("employee_type").notNull(),
   designation: varchar("designation", { length: 100 }).notNull(), // e.g. "Math Teacher", "Peon", "Accountant"
-  shiftHours: integer("shift_hours").notNull().default(8), // hours/day required for a full "Present" day — set per employee
   basicSalary: integer("basic_salary").notNull().default(0),
   allowances: integer("allowances").notNull().default(0), // fixed monthly allowance, on top of basic
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -193,12 +193,39 @@ export const employeesRelations = relations(employees, ({ one, many }) => ({
   leaveRequests: many(leaveRequests),
 }));
 
-// Weekly off days. Admin toggles which days of the week (0=Sunday..6=Saturday)
-// are non-working — those dates are excluded from absent/leave calculations.
-export const offDays = pgTable("off_days", {
+// Flexible, date-effective weekly timetable. e.g. "8am-10am Mon-Sat" now,
+// "8am-1pm Mon-Sat, 8am-12pm Fri" later — each schedule only applies from
+// its `effectiveFrom` date onward, so past attendance/salary keeps the hours
+// that were actually in effect at the time. A day of week with no row in the
+// active schedule is a non-working (off) day.
+export const workSchedules = pgTable("work_schedules", {
   id: serial("id").primaryKey(),
-  dayOfWeek: integer("day_of_week").notNull().unique(), // 0-6
+  effectiveFrom: varchar("effective_from", { length: 10 }).notNull(), // "YYYY-MM-DD"
+  label: varchar("label", { length: 100 }), // e.g. "Summer Camp Hours"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const scheduleDays = pgTable(
+  "schedule_days",
+  {
+    id: serial("id").primaryKey(),
+    scheduleId: integer("schedule_id").notNull().references(() => workSchedules.id, { onDelete: "cascade" }),
+    dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday..6=Saturday
+    startTime: varchar("start_time", { length: 5 }).notNull(), // "HH:MM", 24h
+    endTime: varchar("end_time", { length: 5 }).notNull(),
+  },
+  (table) => ({
+    scheduleDayUnique: unique().on(table.scheduleId, table.dayOfWeek),
+  })
+);
+
+export const workSchedulesRelations = relations(workSchedules, ({ many }) => ({
+  days: many(scheduleDays),
+}));
+
+export const scheduleDaysRelations = relations(scheduleDays, ({ one }) => ({
+  schedule: one(workSchedules, { fields: [scheduleDays.scheduleId], references: [workSchedules.id] }),
+}));
 
 // ---- Attendance -----------------------------------------------------------
 

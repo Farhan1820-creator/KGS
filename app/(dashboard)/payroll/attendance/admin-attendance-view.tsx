@@ -15,7 +15,8 @@ import { DataTable } from "@/components/layout/data-table";
 import { adminAttendanceColumns, AttendanceRow } from "./attendance-columns";
 import { LeaveApprovals, PendingLeaveRow } from "./leave-approvals";
 import { EmployeesPanel, EmployeeRow } from "./employees-panel";
-import { OffDaysDialog } from "./off-days-dialog";
+import { WorkScheduleDialog } from "./work-schedule-dialog";
+import { getActiveSchedule, formatTimeLabel, WEEKDAY_LABELS, todayString, type WorkSchedule } from "./attendance-helpers";
 import { Settings2 } from "lucide-react";
 
 interface AdminAttendanceViewProps {
@@ -24,7 +25,7 @@ interface AdminAttendanceViewProps {
   employeeOptions: { id: number; name: string }[];
   pendingLeaves: PendingLeaveRow[];
   employees: EmployeeRow[];
-  currentOffDays: number[];
+  schedules: WorkSchedule[];
 }
 
 export function AdminAttendanceView({
@@ -33,12 +34,14 @@ export function AdminAttendanceView({
   employeeOptions,
   pendingLeaves,
   employees,
-  currentOffDays,
+  schedules,
 }: AdminAttendanceViewProps) {
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState(month);
   const [employeeFilter, setEmployeeFilter] = useState<string>("all");
-  const [offDaysDialogOpen, setOffDaysDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+
+  const activeSchedule = getActiveSchedule(todayString(), schedules);
 
   function applyMonth(value: string) {
     setSelectedMonth(value);
@@ -69,11 +72,27 @@ export function AdminAttendanceView({
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setOffDaysDialogOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
           <Settings2 className="h-4 w-4 mr-1" />
-          Weekly Off Days
+          Work Schedule
         </Button>
       </div>
+
+      {activeSchedule && (
+        <div className="rounded-lg border p-3 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
+          <span className="font-medium text-foreground">
+            Active schedule{activeSchedule.label ? ` — ${activeSchedule.label}` : ""}:
+          </span>
+          {activeSchedule.days
+            .slice()
+            .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+            .map((d) => (
+              <span key={d.dayOfWeek}>
+                {WEEKDAY_LABELS[d.dayOfWeek].slice(0, 3)} {formatTimeLabel(d.startTime)}–{formatTimeLabel(d.endTime)}
+              </span>
+            ))}
+        </div>
+      )}
 
       <DataTable columns={adminAttendanceColumns} data={filteredRecords} />
 
@@ -87,7 +106,7 @@ export function AdminAttendanceView({
         </div>
       </div>
 
-      <OffDaysDialog open={offDaysDialogOpen} onOpenChange={setOffDaysDialogOpen} currentOffDays={currentOffDays} />
+      <WorkScheduleDialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen} />
     </div>
   );
 }

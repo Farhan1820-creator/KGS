@@ -9,7 +9,7 @@ import { SalaryView } from "./payroll/salary-view";
 import { MySalaryView } from "./payroll/my-salary-view";
 import { AdminAttendanceView } from "./attendance/admin-attendance-view";
 import { MyAttendanceView } from "./attendance/my-attendance-view";
-import { buildAttendanceReport, calculateSalary, currentMonth, todayString } from "./attendance/attendance-helpers";
+import { buildAttendanceReport, calculateSalary, currentMonth, todayString, type WorkSchedule } from "./attendance/attendance-helpers";
 import type { PendingLeaveRow } from "./attendance/leave-approvals";
 import type { EmployeeRow } from "./attendance/employees-panel";
 
@@ -32,8 +32,13 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     redirect("/");
   }
 
-  const offDayRows = await db.query.offDays.findMany();
-  const offDaysSet = new Set(offDayRows.map((o) => o.dayOfWeek));
+  const scheduleRows = await db.query.workSchedules.findMany({ with: { days: true } });
+  const schedules: WorkSchedule[] = scheduleRows.map((r) => ({
+    id: r.id,
+    effectiveFrom: r.effectiveFrom,
+    label: r.label,
+    days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
+  }));
 
   let attendanceContent: ReactNode;
   let payrollContent: ReactNode;
@@ -50,6 +55,13 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       }),
     ]);
 
+    // Only requests that overlap the month currently selected in the month
+    // picker — a request "belongs" to this month if its from/to date range
+    // touches it at all, even if it spans into an adjacent month.
+    const pendingLeaveRowsThisMonth = pendingLeaveRows.filter(
+      (l) => l.fromDate.slice(0, 7) <= month && l.toDate.slice(0, 7) >= month
+    );
+
     const employeeList = employeeRows.map((e) => ({ id: e.id, name: e.user.name, designation: e.designation }));
 
     const rawRecords = monthAttendance.map((a) => ({
@@ -65,11 +77,11 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       employeeList,
       month,
       rawRecords,
-      offDaysSet,
+      schedules,
       approvedLeaves.map((l) => ({ employeeId: l.employeeId, fromDate: l.fromDate, toDate: l.toDate }))
     );
 
-    const pendingLeaves: PendingLeaveRow[] = pendingLeaveRows.map((l) => ({
+    const pendingLeaves: PendingLeaveRow[] = pendingLeaveRowsThisMonth.map((l) => ({
       id: l.id,
       employeeName: l.employee.user.name,
       fromDate: l.fromDate,
@@ -82,7 +94,6 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       name: e.user.name,
       designation: e.designation,
       employeeType: e.employeeType,
-      shiftHours: e.shiftHours,
       basicSalary: e.basicSalary,
       allowances: e.allowances,
     }));
@@ -94,7 +105,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         employeeOptions={employeeList.map((e) => ({ id: e.id, name: e.name }))}
         pendingLeaves={pendingLeaves}
         employees={employeesForPanel}
-        currentOffDays={Array.from(offDaysSet)}
+        schedules={schedules}
       />
     );
 
@@ -106,11 +117,10 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           designation: e.designation,
           basicSalary: e.basicSalary,
           allowances: e.allowances,
-          shiftHours: e.shiftHours,
         },
         month,
         rawRecords,
-        offDaysSet,
+        schedules,
         approvedLeaves.filter((l) => l.employeeId === e.id).map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
       )
     );
@@ -138,6 +148,10 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         }),
       ]);
 
+      // Only this employee's leave requests that overlap the currently
+      // selected month (same "belongs to this month" rule as the admin view).
+      const myLeavesThisMonth = myLeaves.filter((l) => l.fromDate.slice(0, 7) <= month && l.toDate.slice(0, 7) >= month);
+
       const today = todayString();
       const todayRecord = attendanceRows.find((a) => a.date === today) ?? null;
 
@@ -158,22 +172,14 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         [{ id: employee.id, name: "", designation: "" }],
         month,
         rawRecords,
-        offDaysSet,
+        schedules,
         approvedOwnLeaves
       );
 
       attendanceContent = (
         <MyAttendanceView
-          shiftHours={employee.shiftHours}
-          today={{
-            checkIn: todayRecord?.checkIn ? new Date(todayRecord.checkIn).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : null,
-            checkInAt: todayRecord?.checkIn ? new Date(todayRecord.checkIn).toISOString() : null,
-            checkOut: todayRecord?.checkOut ? new Date(todayRecord.checkOut).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : null,
-            secondsWorked: todayRecord?.secondsWorked ?? null,
-            status: todayRecord?.status ?? null,
-          }}
           history={history}
-          leaves={myLeaves.map((l) => ({ id: l.id, fromDate: l.fromDate, toDate: l.toDate, reason: l.reason, status: l.status }))}
+          leaves={myLeavesThisMonth.map((l) => ({ id: l.id, fromDate: l.fromDate, toDate: l.toDate, reason: l.reason, status: l.status }))}
         />
       );
 
@@ -184,11 +190,10 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           designation: employee.designation,
           basicSalary: employee.basicSalary,
           allowances: employee.allowances,
-          shiftHours: employee.shiftHours,
         },
         month,
         rawRecords,
-        offDaysSet,
+        schedules,
         approvedOwnLeaves.map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
       );
 

@@ -21,12 +21,24 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onRowClick?: (row: TData) => void;
+  showRowNumber?: boolean; // default true — prepends a "#" column numbered by absolute row position
 }
 
-export function DataTable<TData, TValue>({ columns, data, onRowClick }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, onRowClick, showRowNumber = true }: DataTableProps<TData, TValue>) {
+  const tableColumns = showRowNumber
+    ? ([
+        {
+          id: "__rowNumber",
+          header: "#",
+          cell: ({ row }) => <span className="text-muted-foreground">{row.index + 1}</span>,
+        } as ColumnDef<TData, TValue>,
+        ...columns,
+      ] as ColumnDef<TData, TValue>[])
+    : columns;
+
   const table = useReactTable({
     data,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 10 } },
@@ -64,7 +76,7 @@ export function DataTable<TData, TValue>({ columns, data, onRowClick }: DataTabl
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={tableColumns.length} className="text-center h-24 text-muted-foreground">
                   No results.
                 </TableCell>
               </TableRow>

@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageToolbar, FilterConfig } from "@/components/layout/page-toolbar";
 import { DataTable } from "@/components/layout/data-table";
-import { teacherColumns, TeacherRow } from "./teacher-columns";
-import { TeacherDialog } from "./teacher-dialog";
+import { getTeacherColumns, TeacherRow } from "./teacher-columns";
+import { TeacherDialog, TeacherEditTarget } from "./teacher-dialog";
 
 interface TeachersClientProps {
   initialData: TeacherRow[];
@@ -15,10 +15,12 @@ interface TeachersClientProps {
 export function TeachersClient({ initialData, subjects }: TeachersClientProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TeacherEditTarget | null>(null);
   const [filters, setFilters] = useState<Record<string, string>>({});
 
   const filterConfig: FilterConfig[] = [
     { type: "search", key: "name", placeholder: "Search by name" },
+    { type: "search", key: "teacherId", placeholder: "Search by teacher ID" },
     { type: "search", key: "contactNumber", placeholder: "Search by contact" },
     {
       type: "select",
@@ -38,23 +40,42 @@ export function TeachersClient({ initialData, subjects }: TeachersClientProps) {
     );
   }, [initialData, filters]);
 
+  function handleAdd() {
+    setEditTarget(null);
+    setDialogOpen(true);
+  }
+
+  function handleEdit(row: TeacherRow) {
+    setEditTarget({
+      id: row.id,
+      name: row.name,
+      contactNumber: row.contactNumber,
+      subjectId: row.subjectId,
+      teacherId: row.teacherId,
+    });
+    setDialogOpen(true);
+  }
+
+  const columns = getTeacherColumns({ onEdit: handleEdit });
+
   return (
     <div className="page-shell space-y-4">
       <PageToolbar
         filters={filterConfig}
         values={filters}
         onChange={(key, value) => setFilters((f) => ({ ...f, [key]: value }))}
-        onAdd={() => setDialogOpen(true)}
+        onAdd={handleAdd}
         addLabel="Add Teacher"
       />
 
-      <DataTable columns={teacherColumns} data={filteredData} />
+      <DataTable columns={columns} data={filteredData} />
 
       <TeacherDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         subjects={subjects}
-        onCreated={() => router.refresh()}
+        teacher={editTarget}
+        onSaved={() => router.refresh()}
       />
     </div>
   );

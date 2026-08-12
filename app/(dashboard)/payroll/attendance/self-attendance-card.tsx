@@ -15,7 +15,7 @@ interface SelfAttendanceCardProps {
   todayCheckOut: string | null;
   todaySecondsWorked: number | null;
   todayStatus: AttendanceStatus | null;
-  shiftHours: number;
+  requiredSecondsToday: number | null; // null = today is an off day / no schedule configured
 }
 
 export function SelfAttendanceCard({
@@ -24,7 +24,7 @@ export function SelfAttendanceCard({
   todayCheckOut,
   todaySecondsWorked,
   todayStatus,
-  shiftHours,
+  requiredSecondsToday,
 }: SelfAttendanceCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -74,7 +74,9 @@ export function SelfAttendanceCard({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Today's Attendance</h3>
-          <p className="text-xs text-muted-foreground">Shift requirement: {shiftHours}h</p>
+          <p className="text-xs text-muted-foreground">
+            {requiredSecondsToday ? `Today's requirement: ${formatDuration(requiredSecondsToday)}` : "No shift scheduled today"}
+          </p>
         </div>
         {todayStatus && <Badge variant="outline">{STATUS_LABELS[todayStatus]}</Badge>}
       </div>

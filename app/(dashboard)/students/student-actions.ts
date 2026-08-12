@@ -2,11 +2,12 @@
 
 import { db } from "@/db";
 import { users, students } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { studentSchema, studentUpdateSchema } from "./student-validation";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
+import { withSequentialCode, nextSequenceNumber, formatSequentialCode } from "@/lib/sequential-code";
 import type { StudentFormValues, StudentUpdateFormValues } from "./student-validation";
 
 type StudentActionErrors = Partial<Record<keyof StudentFormValues | "root", string[]>>;
@@ -15,13 +16,28 @@ type StudentActionResult = { success: true } | { success: false; errors: Student
 type StudentUpdateActionErrors = Partial<Record<keyof StudentUpdateFormValues | "root", string[]>>;
 type StudentUpdateActionResult = { success: true } | { success: false; errors: StudentUpdateActionErrors };
 
+// Read-only preview of the roll number a new student would get right now —
+// shown in the form so admins aren't left guessing. The real number is only
+// actually reserved at submit time (see createStudent), so if two admins
+// have this dialog open at once, whoever submits first gets this number and
+// the other's preview will just bump up by one on their next render.
+export async function previewNextRollNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const existing = await db.query.students.findMany({
+    where: like(students.rollNumber, `${year}-STD-%`),
+    columns: { rollNumber: true },
+  });
+  const seq = nextSequenceNumber(existing.map((s) => s.rollNumber), year, "STD");
+  return formatSequentialCode(year, "STD", seq);
+}
+
 export async function createStudent(formData: unknown): Promise<StudentActionResult> {
   const parsed = studentSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, contactNumber, classId, rollNumber, fee } = parsed.data;
+  const { name, email, password, contactNumber, classId, fee } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -34,12 +50,24 @@ export async function createStudent(formData: unknown): Promise<StudentActionRes
       .returning({ id: users.id });
 
     try {
-      await db.insert(students).values({
-        userId: user.id,
-        classId: Number(classId),
-        rollNumber,
-        fee: fee ? Number(fee) : null,
-      });
+      const year = new Date().getFullYear();
+      await withSequentialCode(
+        async () => {
+          const existing = await db.query.students.findMany({
+            where: like(students.rollNumber, `${year}-STD-%`),
+            columns: { rollNumber: true },
+          });
+          const seq = nextSequenceNumber(existing.map((s) => s.rollNumber), year, "STD");
+          return formatSequentialCode(year, "STD", seq);
+        },
+        (rollNumber) =>
+          db.insert(students).values({
+            userId: user.id,
+            classId: Number(classId),
+            rollNumber,
+            fee: fee ? Number(fee) : null,
+          })
+      );
     } catch (innerErr) {
       await db.delete(users).where(eq(users.id, user.id));
       throw innerErr;

@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { employees, attendance } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { SelfAttendanceCard } from "./payroll/attendance/self-attendance-card";
-import { todayString } from "./payroll/attendance/attendance-helpers";
+import { todayString, requiredSecondsForDate, type WorkSchedule } from "./payroll/attendance/attendance-helpers";
 
 type TeacherDashboardProps = {
   name?: string | null;
@@ -20,13 +20,23 @@ const TeacherDashboard = async ({ name }: TeacherDashboardProps) => {
 
   if (employee) {
     const today = todayString();
-    const todayRecord = await db.query.attendance.findFirst({
-      where: and(eq(attendance.employeeId, employee.id), eq(attendance.date, today)),
-    });
+    const [todayRecord, scheduleRows] = await Promise.all([
+      db.query.attendance.findFirst({
+        where: and(eq(attendance.employeeId, employee.id), eq(attendance.date, today)),
+      }),
+      db.query.workSchedules.findMany({ with: { days: true } }),
+    ]);
+
+    const schedules: WorkSchedule[] = scheduleRows.map((r) => ({
+      id: r.id,
+      effectiveFrom: r.effectiveFrom,
+      label: r.label,
+      days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
+    }));
 
     attendanceCard = (
       <SelfAttendanceCard
-        shiftHours={employee.shiftHours}
+        requiredSecondsToday={requiredSecondsForDate(today, schedules)}
         todayCheckIn={
           todayRecord?.checkIn
             ? new Date(todayRecord.checkIn).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })

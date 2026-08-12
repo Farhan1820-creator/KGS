@@ -14,7 +14,6 @@ export type EmployeeRow = {
   name: string;
   designation: string;
   employeeType: "teacher" | "staff";
-  shiftHours: number;
   basicSalary: number;
   allowances: number;
 };
@@ -34,7 +33,6 @@ export function EmployeesPanel({ employees }: { employees: EmployeeRow[] }) {
     setEditTarget({
       id: row.id,
       designation: row.designation,
-      shiftHours: row.shiftHours,
       basicSalary: row.basicSalary,
       allowances: row.allowances,
     });
@@ -80,7 +78,6 @@ export function EmployeesPanel({ employees }: { employees: EmployeeRow[] }) {
               <Badge variant={e.employeeType === "teacher" ? "default" : "secondary"}>{e.designation}</Badge>
             </div>
             <div className="flex items-center gap-4 text-muted-foreground">
-              <span>{e.shiftHours}h shift</span>
               <span>Rs. {(e.basicSalary + e.allowances).toLocaleString()}/mo</span>
               <Button size="icon-sm" variant="ghost" onClick={() => handleEdit(e)}>
                 <Pencil className="h-3.5 w-3.5" />

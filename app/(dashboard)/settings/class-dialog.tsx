@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { classSchema, ClassFormValues } from "./class-validation";
-import { createClass } from "./settings-actions";
+import { createClass, updateClass } from "./settings-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,9 +15,11 @@ interface ClassDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: () => void;
+  editTarget?: { id: number; name: string; section: string | null } | null;
 }
 
-export function ClassDialog({ open, onOpenChange, onCreated }: ClassDialogProps) {
+export function ClassDialog({ open, onOpenChange, onCreated, editTarget }: ClassDialogProps) {
+  const isEdit = !!editTarget;
   const {
     register,
     handleSubmit,
@@ -25,8 +28,12 @@ export function ClassDialog({ open, onOpenChange, onCreated }: ClassDialogProps)
     formState: { errors, isSubmitting },
   } = useForm<ClassFormValues>({ resolver: zodResolver(classSchema) });
 
+  useEffect(() => {
+    if (open) reset(editTarget ? { name: editTarget.name, section: editTarget.section ?? "" } : { name: "", section: "" });
+  }, [open, editTarget, reset]);
+
   async function onSubmit(values: ClassFormValues) {
-    const res = await createClass(values);
+    const res = isEdit ? await updateClass(editTarget!.id, values) : await createClass(values);
 
     if (!res.success) {
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
@@ -36,7 +43,7 @@ export function ClassDialog({ open, onOpenChange, onCreated }: ClassDialogProps)
       return;
     }
 
-    toast.success("Class created");
+    toast.success(isEdit ? "Class updated" : "Class created");
     reset();
     onOpenChange(false);
     onCreated();
@@ -46,7 +53,7 @@ export function ClassDialog({ open, onOpenChange, onCreated }: ClassDialogProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Class</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Class" : "Add Class"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -63,7 +70,7 @@ export function ClassDialog({ open, onOpenChange, onCreated }: ClassDialogProps)
           </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Class"}
+            {isSubmitting ? "Saving..." : isEdit ? "Save Changes" : "Create Class"}
           </Button>
         </form>
       </DialogContent>

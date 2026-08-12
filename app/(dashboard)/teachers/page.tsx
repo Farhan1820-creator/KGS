@@ -23,7 +23,9 @@ export default async function TeachersPage() {
     name: t.user.name,
     email: t.user.email,
     contactNumber: t.user.contactNumber,
+    subjectId: t.subjectId,
     subjectName: t.subject?.name ?? "—",
+    teacherId: t.teacherId,
   }));
 
   return <TeachersClient initialData={data} subjects={subjectList} />;

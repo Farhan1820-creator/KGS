@@ -18,7 +18,6 @@ import { createStaffEmployee, updateEmployeeSettings } from "./attendance-action
 export type EmployeeEditTarget = {
   id: number;
   designation: string;
-  shiftHours: number;
   basicSalary: number;
   allowances: number;
 };
@@ -30,7 +29,7 @@ interface EmployeeDialogProps {
   onSaved: () => void;
 }
 
-const emptyForm = { name: "", email: "", password: "", contactNumber: "", designation: "", shiftHours: "8", basicSalary: "", allowances: "0" };
+const emptyForm = { name: "", email: "", password: "", contactNumber: "", designation: "", basicSalary: "", allowances: "0" };
 
 export function EmployeeDialog({ open, onOpenChange, editTarget, onSaved }: EmployeeDialogProps) {
   const router = useRouter();
@@ -47,7 +46,6 @@ export function EmployeeDialog({ open, onOpenChange, editTarget, onSaved }: Empl
         password: "",
         contactNumber: "",
         designation: editTarget.designation,
-        shiftHours: String(editTarget.shiftHours),
         basicSalary: String(editTarget.basicSalary),
         allowances: String(editTarget.allowances),
       });
@@ -67,7 +65,6 @@ export function EmployeeDialog({ open, onOpenChange, editTarget, onSaved }: Empl
       const result = isEdit
         ? await updateEmployeeSettings(editTarget!.id, {
             designation: form.designation,
-            shiftHours: form.shiftHours,
             basicSalary: form.basicSalary,
             allowances: form.allowances,
           })
@@ -125,12 +122,7 @@ export function EmployeeDialog({ open, onOpenChange, editTarget, onSaved }: Empl
             {errors.designation && <p className="text-sm text-destructive">{errors.designation[0]}</p>}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <Label>Shift Hours</Label>
-              <Input type="number" value={form.shiftHours} onChange={(e) => set("shiftHours", e.target.value)} />
-              {errors.shiftHours && <p className="text-sm text-destructive">{errors.shiftHours[0]}</p>}
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Basic Salary</Label>
               <Input type="number" value={form.basicSalary} onChange={(e) => set("basicSalary", e.target.value)} />

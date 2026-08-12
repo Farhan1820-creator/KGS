@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import {
   StudentFormValues,
   StudentUpdateFormValues,
 } from "./student-validation";
-import { createStudent, updateStudent } from "./student-actions";
+import { createStudent, updateStudent, previewNextRollNumber } from "./student-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,7 @@ const emptyDefaults: StudentFormValues = {
 export function StudentDialog({ open, onOpenChange, classes, feeStructures = [], onSaved, student }: StudentDialogProps) {
   const isEdit = Boolean(student);
   const structureMap = new Map(feeStructures.map((s) => [s.classId, s.amount]));
+  const [rollPreview, setRollPreview] = useState<string | null>(null);
 
   const {
     register,
@@ -89,6 +90,22 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
       reset(emptyDefaults);
     }
   }, [open, student, reset]);
+
+  // Show a live preview of the roll number a new student will get — the
+  // actual number is only reserved server-side at submit time.
+  useEffect(() => {
+    if (!open || isEdit) {
+      setRollPreview(null);
+      return;
+    }
+    let cancelled = false;
+    previewNextRollNumber().then((code) => {
+      if (!cancelled) setRollPreview(code);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, isEdit]);
 
   const feeTouched = watch("fee");
 
@@ -181,11 +198,23 @@ export function StudentDialog({ open, onOpenChange, classes, feeStructures = [],
             {errors.classId && <p className="text-sm text-red-500">{errors.classId.message}</p>}
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="rollNumber">Roll number</Label>
-            <Input id="rollNumber" placeholder="e.g. 2026-STD-014" {...register("rollNumber")} />
-            {errors.rollNumber && <p className="text-sm text-red-500">{errors.rollNumber.message}</p>}
-          </div>
+          {isEdit ? (
+            <div className="space-y-1">
+              <Label htmlFor="rollNumber">Roll number</Label>
+              <Input id="rollNumber" placeholder="e.g. 2026-STD-014" {...register("rollNumber")} />
+              {errors.rollNumber && <p className="text-sm text-red-500">{errors.rollNumber.message}</p>}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Label>Roll number</Label>
+              <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
+                {rollPreview ?? "Generating..."}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Auto-assigned when the student is created — not editable here.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-1">
             <Label htmlFor="fee">Monthly fee (Rs.)</Label>
