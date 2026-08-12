@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { auth } from "@/auth";
-import { users, teachers, employees, attendance, leaveRequests, workSchedules, scheduleDays } from "@/db/schema";
+import { users, teachers, employees, attendance, leaveRequests, workSchedules, scheduleDays, offDays } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -193,6 +193,31 @@ export async function createWorkSchedule(formData: unknown): Promise<ActionResul
     return { success: true };
   } catch {
     return { success: false, errors: { root: ["Could not save the schedule."] } };
+  }
+}
+
+// ---- Off days (admin) ----------------------------------------------------
+
+// Replaces the global set of weekly off days (0=Sunday..6=Saturday) in one
+// go. There's no db.transaction() on this driver, so this does a delete-then
+// -insert; a brief window where the table is empty is fine for a low-traffic
+// settings action like this one.
+export async function setOffDays(days: number[]): Promise<ActionResult<Record<string, never>>> {
+  const session = await auth();
+  if (!session?.user?.id) return { success: false, errors: { root: ["Not authenticated."] } };
+  if (session.user.role !== "admin") return { success: false, errors: { root: ["Only admins can change off days."] } };
+
+  const uniqueDays = Array.from(new Set(days)).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6);
+
+  try {
+    await db.delete(offDays);
+    if (uniqueDays.length > 0) {
+      await db.insert(offDays).values(uniqueDays.map((dayOfWeek) => ({ dayOfWeek })));
+    }
+    revalidatePath("/payroll");
+    return { success: true };
+  } catch {
+    return { success: false, errors: { root: ["Could not save off days."] } };
   }
 }
 

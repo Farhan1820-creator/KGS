@@ -227,6 +227,16 @@ export const scheduleDaysRelations = relations(scheduleDays, ({ one }) => ({
   schedule: one(workSchedules, { fields: [scheduleDays.scheduleId], references: [workSchedules.id] }),
 }));
 
+// Global weekly off days (e.g. Saturday/Sunday) — a simpler, org-wide toggle
+// that applies on top of every work schedule. A day of week in this table is
+// treated as non-working for every employee regardless of what the active
+// schedule says, so admins don't need to edit every schedule to mark a
+// weekend off.
+export const offDays = pgTable("off_days", {
+  id: serial("id").primaryKey(),
+  dayOfWeek: integer("day_of_week").notNull().unique(), // 0=Sunday..6=Saturday
+});
+
 // ---- Attendance -----------------------------------------------------------
 
 export const attendanceStatusEnum = pgEnum("attendance_status", ["present", "half_day", "absent", "leave"]);

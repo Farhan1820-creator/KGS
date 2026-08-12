@@ -40,6 +40,9 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
   }));
 
+  const offDayRows = await db.query.offDays.findMany();
+  const offDaysList = offDayRows.map((d) => d.dayOfWeek);
+
   let attendanceContent: ReactNode;
   let payrollContent: ReactNode;
 
@@ -78,7 +81,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       month,
       rawRecords,
       schedules,
-      approvedLeaves.map((l) => ({ employeeId: l.employeeId, fromDate: l.fromDate, toDate: l.toDate }))
+      approvedLeaves.map((l) => ({ employeeId: l.employeeId, fromDate: l.fromDate, toDate: l.toDate })),
+      offDaysList
     );
 
     const pendingLeaves: PendingLeaveRow[] = pendingLeaveRowsThisMonth.map((l) => ({
@@ -106,6 +110,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         pendingLeaves={pendingLeaves}
         employees={employeesForPanel}
         schedules={schedules}
+        offDays={offDaysList}
       />
     );
 
@@ -121,7 +126,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         month,
         rawRecords,
         schedules,
-        approvedLeaves.filter((l) => l.employeeId === e.id).map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
+        approvedLeaves.filter((l) => l.employeeId === e.id).map((l) => ({ fromDate: l.fromDate, toDate: l.toDate })),
+        offDaysList
       )
     );
 
@@ -173,7 +179,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         month,
         rawRecords,
         schedules,
-        approvedOwnLeaves
+        approvedOwnLeaves,
+        offDaysList
       );
 
       attendanceContent = (
@@ -194,7 +201,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         month,
         rawRecords,
         schedules,
-        approvedOwnLeaves.map((l) => ({ fromDate: l.fromDate, toDate: l.toDate }))
+        approvedOwnLeaves.map((l) => ({ fromDate: l.fromDate, toDate: l.toDate })),
+        offDaysList
       );
 
       payrollContent = <MySalaryView month={month} salary={salary} />;

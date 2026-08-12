@@ -51,16 +51,18 @@ export function getActiveSchedule(date: string, schedules: WorkSchedule[]): Work
   return applicable.reduce((latest, s) => (s.effectiveFrom > latest.effectiveFrom ? s : latest));
 }
 
-// Returns this date's start/end timing, or null if it's a non-working day
-// under the schedule that was active on that date.
-export function getDaySchedule(date: string, schedules: WorkSchedule[]): DaySchedule | null {
+// Returns this date's start/end timing, or null if it's a non-working day —
+// either because the schedule active on that date has no entry for this
+// weekday, or because this weekday is a global off day (see `offDays` below).
+export function getDaySchedule(date: string, schedules: WorkSchedule[], offDays: number[] = []): DaySchedule | null {
+  if (offDays.includes(dayOfWeek(date))) return null;
   const active = getActiveSchedule(date, schedules);
   if (!active) return null;
   return active.days.find((d) => d.dayOfWeek === dayOfWeek(date)) ?? null;
 }
 
-export function isWorkingDay(date: string, schedules: WorkSchedule[]): boolean {
-  return getDaySchedule(date, schedules) !== null;
+export function isWorkingDay(date: string, schedules: WorkSchedule[], offDays: number[] = []): boolean {
+  return getDaySchedule(date, schedules, offDays) !== null;
 }
 
 function timeToMinutes(time: string): number {
@@ -69,8 +71,8 @@ function timeToMinutes(time: string): number {
 }
 
 // Required seconds for a full day on this date, or null if it's a non-working day.
-export function requiredSecondsForDate(date: string, schedules: WorkSchedule[]): number | null {
-  const day = getDaySchedule(date, schedules);
+export function requiredSecondsForDate(date: string, schedules: WorkSchedule[], offDays: number[] = []): number | null {
+  const day = getDaySchedule(date, schedules, offDays);
   if (!day) return null;
   return Math.max(0, (timeToMinutes(day.endTime) - timeToMinutes(day.startTime)) * 60);
 }
@@ -151,14 +153,15 @@ export function buildAttendanceReport(
   month: string,
   records: RawAttendanceRecord[],
   schedules: WorkSchedule[],
-  approvedLeaves: RawApprovedLeave[]
+  approvedLeaves: RawApprovedLeave[],
+  offDays: number[] = []
 ): ReportRow[] {
   const dates = datesInMonth(month);
   const rows: ReportRow[] = [];
 
   for (const emp of employees) {
     for (const date of dates) {
-      if (!isWorkingDay(date, schedules)) continue;
+      if (!isWorkingDay(date, schedules, offDays)) continue;
 
       const existing = records.find((r) => r.employeeId === emp.id && r.date === date);
       if (existing) {
@@ -223,10 +226,11 @@ export function calculateSalary(
   month: string,
   records: RawAttendanceRecord[],
   schedules: WorkSchedule[],
-  approvedLeaves: { fromDate: string; toDate: string }[]
+  approvedLeaves: { fromDate: string; toDate: string }[],
+  offDays: number[] = []
 ): SalaryBreakdown {
   const dates = datesInMonth(month);
-  const workingDates = dates.filter((d) => isWorkingDay(d, schedules));
+  const workingDates = dates.filter((d) => isWorkingDay(d, schedules, offDays));
   const workingDaysInMonth = workingDates.length || 1; // avoid div-by-zero
   const dailyRate = employee.basicSalary / workingDaysInMonth;
 
@@ -239,7 +243,7 @@ export function calculateSalary(
   let earnedBasic = 0;
 
   for (const date of workingDates) {
-    const requiredSecondsForDay = requiredSecondsForDate(date, schedules) ?? 0;
+    const requiredSecondsForDay = requiredSecondsForDate(date, schedules, offDays) ?? 0;
     totalRequiredSeconds += requiredSecondsForDay;
     const record = records.find((r) => r.employeeId === employee.id && r.date === date);
 

@@ -16,8 +16,9 @@ import { adminAttendanceColumns, AttendanceRow } from "./attendance-columns";
 import { LeaveApprovals, PendingLeaveRow } from "./leave-approvals";
 import { EmployeesPanel, EmployeeRow } from "./employees-panel";
 import { WorkScheduleDialog } from "./work-schedule-dialog";
+import { OffDaysDialog } from "./off-days-dialog";
 import { getActiveSchedule, formatTimeLabel, WEEKDAY_LABELS, todayString, type WorkSchedule } from "./attendance-helpers";
-import { Settings2 } from "lucide-react";
+import { Settings2, CalendarOff } from "lucide-react";
 
 interface AdminAttendanceViewProps {
   month: string;
@@ -26,6 +27,7 @@ interface AdminAttendanceViewProps {
   pendingLeaves: PendingLeaveRow[];
   employees: EmployeeRow[];
   schedules: WorkSchedule[];
+  offDays: number[];
 }
 
 export function AdminAttendanceView({
@@ -35,11 +37,13 @@ export function AdminAttendanceView({
   pendingLeaves,
   employees,
   schedules,
+  offDays,
 }: AdminAttendanceViewProps) {
   const router = useRouter();
   const [selectedMonth, setSelectedMonth] = useState(month);
   const [employeeFilter, setEmployeeFilter] = useState<string>("all");
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [offDaysDialogOpen, setOffDaysDialogOpen] = useState(false);
 
   const activeSchedule = getActiveSchedule(todayString(), schedules);
 
@@ -76,21 +80,39 @@ export function AdminAttendanceView({
           <Settings2 className="h-4 w-4 mr-1" />
           Work Schedule
         </Button>
+        <Button variant="outline" size="sm" onClick={() => setOffDaysDialogOpen(true)}>
+          <CalendarOff className="h-4 w-4 mr-1" />
+          Off Days
+        </Button>
       </div>
 
-      {activeSchedule && (
+      {(activeSchedule || offDays.length > 0) && (
         <div className="rounded-lg border p-3 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-          <span className="font-medium text-foreground">
-            Active schedule{activeSchedule.label ? ` — ${activeSchedule.label}` : ""}:
-          </span>
-          {activeSchedule.days
-            .slice()
-            .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-            .map((d) => (
-              <span key={d.dayOfWeek}>
-                {WEEKDAY_LABELS[d.dayOfWeek].slice(0, 3)} {formatTimeLabel(d.startTime)}–{formatTimeLabel(d.endTime)}
+          {activeSchedule && (
+            <>
+              <span className="font-medium text-foreground">
+                Active schedule{activeSchedule.label ? ` — ${activeSchedule.label}` : ""}:
               </span>
-            ))}
+              {activeSchedule.days
+                .slice()
+                .sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+                .map((d) => (
+                  <span key={d.dayOfWeek}>
+                    {WEEKDAY_LABELS[d.dayOfWeek].slice(0, 3)} {formatTimeLabel(d.startTime)}–{formatTimeLabel(d.endTime)}
+                  </span>
+                ))}
+            </>
+          )}
+          {offDays.length > 0 && (
+            <span>
+              <span className="font-medium text-foreground">Off:</span>{" "}
+              {offDays
+                .slice()
+                .sort((a, b) => a - b)
+                .map((d) => WEEKDAY_LABELS[d].slice(0, 3))
+                .join(", ")}
+            </span>
+          )}
         </div>
       )}
 
@@ -107,6 +129,7 @@ export function AdminAttendanceView({
       </div>
 
       <WorkScheduleDialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen} />
+      <OffDaysDialog open={offDaysDialogOpen} onOpenChange={setOffDaysDialogOpen} currentOffDays={offDays} />
     </div>
   );
 }
