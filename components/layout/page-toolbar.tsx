@@ -31,8 +31,8 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center flex-1">
         {filters.map((f) =>
           f.type === "search" ? (
             <Input
@@ -40,7 +40,7 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
               placeholder={f.placeholder}
               value={values[f.key] ?? ""}
               onChange={(e) => onChange(f.key, e.target.value)}
-              className="w-full sm:w-48"
+              className="w-full sm:w-56"
             />
           ) : (
             <Select
@@ -68,8 +68,8 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
           </Button>
         )}
       </div>
-      <div>
-        <Button onClick={onAdd} size="sm">
+      <div className="shrink-0">
+        <Button onClick={onAdd} size="default" className="w-full md:w-auto shadow-sm">
           <Plus className="h-4 w-4 mr-1" />
           {addLabel}
         </Button>

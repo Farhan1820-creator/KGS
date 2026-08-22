@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
 export const teacherSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Enter a valid email"),
@@ -8,6 +10,7 @@ export const teacherSchema = z.object({
     .string()
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
   subjectId: z.string().min(1, "Select a subject"),
+  joinDate: z.string().regex(dateRegex, "Select a valid date"),
 });
 
 export type TeacherFormValues = z.infer<typeof teacherSchema>;
@@ -21,6 +24,7 @@ export const teacherUpdateSchema = z.object({
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
   subjectId: z.string().min(1, "Select a subject"),
   teacherId: z.string().min(1, "Teacher ID is required"),
+  joinDate: z.string().regex(dateRegex, "Select a valid date"),
 });
 
 export type TeacherUpdateFormValues = z.infer<typeof teacherUpdateSchema>;

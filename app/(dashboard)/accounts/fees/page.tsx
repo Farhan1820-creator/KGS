@@ -5,14 +5,14 @@ import { fees } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { FeesClient } from "./fees-client";
 import type { FeeRow } from "./fee-columns";
-import { isFeeRange, monthsForRange, FeeRange } from "./fee-range";
+import { currentMonth, monthsInRange } from "./fee-range";
 
 export const dynamic = "force-dynamic";
 
 interface FeesPageProps {
   searchParams: Promise<{
-    range?: string;
-    month?: string;
+    from?: string;
+    to?: string;
     studentId?: string;
     classId?: string;
   }>;
@@ -24,9 +24,9 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
   if (session.user.role !== "admin") redirect("/");
 
   const params = await searchParams;
-  const range: FeeRange = isFeeRange(params.range) ? params.range : "this_month";
-  const month = params.month; // specific month overrides the range when set
-  const monthsToQuery = month ? [month] : monthsForRange(range);
+  const from = params.from || currentMonth();
+  const to = params.to || currentMonth();
+  const monthsToQuery = monthsInRange(from, to);
 
   const [feeRows, classList, studentList, structures] = await Promise.all([
     db.query.fees.findMany({
@@ -64,8 +64,8 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
       classes={classList}
       students={studentList.map((s) => ({ id: s.id, name: s.user.name }))}
       structures={structures.map((s) => ({ classId: s.classId, amount: s.amount }))}
-      range={range}
-      month={month}
+      from={from}
+      to={to}
       studentId={params.studentId}
       classId={params.classId}
     />

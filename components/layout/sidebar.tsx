@@ -19,6 +19,7 @@ import {
   BlocksIcon,
   Wallet,
   Receipt,
+  FileText,
 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 
@@ -27,12 +28,21 @@ type LinkItem = {
   label: string;
   icon: typeof BlocksIcon;
   roles: string[];
-  children?: { href: string; label: string }[];
+  children?: { href: string; label: string; roles?: string[] }[];
 };
 
 const links: LinkItem[] = [
-  { href: "/", label: "Dashboard", icon: BlocksIcon, roles: ["admin", "teacher", "student", "staff"] },
-  { href: "/students", label: "Students", icon: GraduationCap, roles: ["admin"] },
+  { href: "/dashboard", label: "Dashboard", icon: BlocksIcon, roles: ["admin", "teacher", "student", "staff"] },
+  { 
+    href: "/students", 
+    label: "Students", 
+    icon: GraduationCap, 
+    roles: ["admin", "teacher"],
+    children: [
+      { href: "/students", label: "Directory", roles: ["admin"] },
+      { href: "/students/attendance", label: "Attendance", roles: ["admin", "teacher"] },
+    ]
+  },
   { href: "/teachers", label: "Teachers", icon: Users, roles: ["admin"] },
   { href: "/diary", label: "Diary", icon: BookOpen, roles: ["admin", "teacher", "student"] },
   {
@@ -48,7 +58,10 @@ const links: LinkItem[] = [
   },
   { href: "/settings", label: "Settings", icon: Settings, roles: ["admin"] },
   { href: "/payroll", label: "Payroll", icon: Wallet, roles: ["admin", "teacher", "staff"] },
+  { href: "/notes", label: "Notes", icon: FileText, roles: ["admin", "teacher", "staff"] },
+  { href: "/dashboard/test-reports", label: "Test Reports", icon: FileText, roles: ["admin", "teacher"] },
 ];
+
 
 interface SidebarProps {
   role: string;
@@ -76,18 +89,18 @@ export function Sidebar({ role }: SidebarProps) {
 
       <aside
         className={cn(
-          "h-screen fixed md:sticky top-0 z-50 border-r bg-background transition-all duration-200 flex flex-col",
+          "h-screen fixed md:sticky top-0 z-50 border-r bg-gradient-to-r from-primary/80 to-primary transition-all duration-200 flex flex-col",
           "w-64 md:w-auto",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           collapsed ? "md:w-16" : "md:w-64"
         )}
       >
-        <div className="flex items-center justify-between p-3 border-b">
-          {!collapsed && <span className="font-semibold text-sm">Kashmir Grammer School</span>}
+        <div className="flex items-center justify-between p-3 border-b border-background/40">
+          {!collapsed && <span className="font-semibold text-md text-background">The Learnex Academy</span>}
           <Button
             variant="ghost"
             size="icon"
-            className="hidden md:inline-flex"
+            className="hidden md:inline-flex rounded-full bg-background"
             onClick={() => setCollapsed((c) => !c)}
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -114,8 +127,8 @@ export function Sidebar({ role }: SidebarProps) {
                   href={href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                    active ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-md transition-colors text-background",
+                    active ? "bg-background text-primary" : "hover:bg-muted hover:text-primary",
                     collapsed && "md:justify-center md:px-0"
                   )}
                 >
@@ -136,8 +149,8 @@ export function Sidebar({ role }: SidebarProps) {
                     setOpenMenu((cur) => (cur === href ? null : href));
                   }}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full",
-                    active ? "bg-primary/10 text-foreground font-medium" : "hover:bg-muted",
+                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors w-full text-background",
+                    active ? "bg-background text-primary font-medium" : "hover:bg-muted hover:text-primary",
                     collapsed && "md:justify-center md:px-0"
                   )}
                 >
@@ -150,16 +163,18 @@ export function Sidebar({ role }: SidebarProps) {
 
                 {isOpen && (
                   <div className={cn("mt-1 space-y-1 pl-4", collapsed && "md:hidden")}>
-                    {children.map((child) => {
-                      const childActive = pathname.startsWith(child.href);
+                    {children
+                      .filter((child) => !child.roles || child.roles.includes(role))
+                      .map((child) => {
+                      const childActive = pathname === child.href || (child.href !== "/students" && pathname.startsWith(child.href));
                       return (
                         <Link
                           key={child.href}
                           href={child.href}
                           onClick={() => setMobileOpen(false)}
                           className={cn(
-                            "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors",
-                            childActive ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"
+                            "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors text-background",
+                            childActive ? "bg-background text-primary" : "hover:bg-muted hover:text-primary"
                           )}
                         >
                           <Receipt className="h-3.5 w-3.5 shrink-0" />
@@ -174,11 +189,11 @@ export function Sidebar({ role }: SidebarProps) {
           })}
         </nav>
 
-        <div className="p-2 border-t">
+        <div className="p-2 border-t border-background/40">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm w-full text-left text-destructive hover:bg-destructive/10 transition-colors",
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm w-full text-left bg-destructive text-background hover:bg-destructive/90 transition-colors ",
               collapsed && "md:justify-center md:px-0"
             )}
           >

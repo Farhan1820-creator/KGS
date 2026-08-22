@@ -37,7 +37,7 @@ export async function createStudent(formData: unknown): Promise<StudentActionRes
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, contactNumber, classId, fee } = parsed.data;
+  const { name, email, password, contactNumber, classId, fee, admissionDate, photoUrl, schoolName } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -66,6 +66,9 @@ export async function createStudent(formData: unknown): Promise<StudentActionRes
             classId: Number(classId),
             rollNumber,
             fee: fee ? Number(fee) : null,
+            admissionDate,
+            photoUrl: photoUrl || null,
+            schoolName: schoolName || null,
           })
       );
     } catch (innerErr) {
@@ -91,21 +94,18 @@ export async function updateStudent(studentId: number, formData: unknown): Promi
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, contactNumber, classId, rollNumber, fee } = parsed.data;
+  const { name, contactNumber, classId, rollNumber, fee, admissionDate, photoUrl, schoolName } = parsed.data;
 
   try {
     const student = await db.query.students.findFirst({
       where: eq(students.id, studentId),
-      columns: { userId: true },
     });
-    if (!student) {
-      return { success: false, errors: { root: ["Student not found."] } };
-    }
+    if (!student) return { success: false, errors: { root: ["Student not found."] } };
 
     await db.update(users).set({ name, contactNumber }).where(eq(users.id, student.userId));
     await db
       .update(students)
-      .set({ classId: Number(classId), rollNumber, fee: fee ? Number(fee) : null })
+      .set({ classId: Number(classId), rollNumber, fee: fee ? Number(fee) : null, admissionDate, photoUrl: photoUrl || null, schoolName: schoolName || null })
       .where(eq(students.id, studentId));
 
     revalidatePath("/students");
@@ -113,5 +113,37 @@ export async function updateStudent(studentId: number, formData: unknown): Promi
     return { success: true };
   } catch {
     return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+  }
+}
+
+// Soft-deactivates or changes student to website/academy student. All their fee records, diary
+// entries, and history are preserved — only the isActive/isAcademyStudent flags change.
+export async function updateStudentStatus(
+  studentId: number,
+  status: "Active" | "Website" | "Inactive"
+): Promise<{ success: true; status: "Active" | "Website" | "Inactive" } | { success: false; error: string }> {
+  try {
+    const student = await db.query.students.findFirst({
+      where: eq(students.id, studentId),
+      columns: { userId: true },
+    });
+    if (!student) return { success: false, error: "Student not found." };
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, student.userId),
+      columns: { id: true },
+    });
+    if (!user) return { success: false, error: "User record not found." };
+
+    const isActive = status !== "Inactive";
+    const studentStatus = status === "Website" ? "website" : "active";
+
+    await db.update(users).set({ isActive }).where(eq(users.id, user.id));
+    await db.update(students).set({ status: studentStatus }).where(eq(students.id, studentId));
+
+    revalidatePath("/students");
+    return { success: true, status };
+  } catch {
+    return { success: false, error: "Something went wrong. Try again." };
   }
 }

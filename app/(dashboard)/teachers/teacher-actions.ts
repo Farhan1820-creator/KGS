@@ -35,7 +35,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, contactNumber, subjectId } = parsed.data;
+  const { name, email, password, contactNumber, subjectId, joinDate } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -63,6 +63,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
             userId: user.id,
             subjectId: Number(subjectId),
             teacherId,
+            joinDate,
           })
       );
     } catch (innerErr) {
@@ -89,7 +90,7 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, contactNumber, subjectId, teacherId: teacherCode } = parsed.data;
+  const { name, contactNumber, subjectId, teacherId: teacherCode, joinDate } = parsed.data;
 
   try {
     const teacher = await db.query.teachers.findFirst({
@@ -103,7 +104,7 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
     await db.update(users).set({ name, contactNumber }).where(eq(users.id, teacher.userId));
     await db
       .update(teachers)
-      .set({ subjectId: Number(subjectId), teacherId: teacherCode })
+      .set({ subjectId: Number(subjectId), teacherId: teacherCode, joinDate })
       .where(eq(teachers.id, teacherId));
 
     revalidatePath("/teachers");
@@ -113,5 +114,34 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
       return { success: false, errors: { teacherId: ["This teacher ID is already in use"] } };
     }
     return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+  }
+}
+
+// Soft-deactivates or reactivates a teacher. All payroll, attendance, diary,
+// and leave history is preserved — only the isActive flag on users changes.
+// Use this instead of deleting when a teacher leaves.
+export async function toggleTeacherActive(
+  teacherId: number
+): Promise<{ success: true; isActive: boolean } | { success: false; error: string }> {
+  try {
+    const teacher = await db.query.teachers.findFirst({
+      where: eq(teachers.id, teacherId),
+      columns: { userId: true },
+    });
+    if (!teacher) return { success: false, error: "Teacher not found." };
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, teacher.userId),
+      columns: { id: true, isActive: true },
+    });
+    if (!user) return { success: false, error: "User record not found." };
+
+    const next = !user.isActive;
+    await db.update(users).set({ isActive: next }).where(eq(users.id, user.id));
+
+    revalidatePath("/teachers");
+    return { success: true, isActive: next };
+  } catch {
+    return { success: false, error: "Something went wrong. Try again." };
   }
 }

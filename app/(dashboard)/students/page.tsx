@@ -1,16 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { classes, fees } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { classes } from "@/db/schema";
 import { StudentsClient } from "./students-client";
+import { currentMonth, computeOverallFeeStatus } from "../accounts/fees/fee-range";
 
 export const dynamic = "force-dynamic";
-
-function currentMonth() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-}
 
 export default async function StudentsPage() {
   const session = await auth();
@@ -20,16 +15,23 @@ export default async function StudentsPage() {
   const month = currentMonth();
 
   // one query with relations instead of separate user/class round-trips (see db/queries/students.ts)
-  const [studentRows, classList, monthFees, structures] = await Promise.all([
+  const [studentRows, classList, allFees, structures] = await Promise.all([
     db.query.students.findMany({
       with: { user: true, class: true },
     }),
     db.query.classes.findMany(),
-    db.query.fees.findMany({ where: eq(fees.month, month), columns: { studentId: true, status: true } }),
+    // fetch every fee record (not just this month) — overall status needs the
+    // full paid/unpaid history from each student's admission date onward
+    db.query.fees.findMany({ columns: { studentId: true, month: true, status: true } }),
     db.query.feeStructures.findMany(),
   ]);
 
-  const feeStatusByStudent = new Map(monthFees.map((f) => [f.studentId, f.status]));
+  // group each student's fee records by month for quick lookup
+  const feesByStudent = new Map<number, Map<string, "paid" | "unpaid">>();
+  for (const f of allFees) {
+    if (!feesByStudent.has(f.studentId)) feesByStudent.set(f.studentId, new Map());
+    feesByStudent.get(f.studentId)!.set(f.month, f.status);
+  }
 
   const data = studentRows.map((s) => ({
     id: s.id,
@@ -40,7 +42,13 @@ export default async function StudentsPage() {
     className: s.class?.name ?? "—",
     rollNumber: s.rollNumber,
     fee: s.fee,
-    feeStatus: feeStatusByStudent.get(s.id) ?? null, // null = no fee record generated yet for this month
+    admissionDate: s.admissionDate,
+    photoUrl: s.photoUrl,
+    schoolName: s.schoolName,
+    isActive: s.user.isActive,
+    status: s.status,
+    // overall status from admission date through the current month — not just this month
+    feeStatus: computeOverallFeeStatus(s.admissionDate, feesByStudent.get(s.id) ?? new Map()),
   }));
 
   return (

@@ -3,13 +3,14 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { attendance, employees, leaveRequests } from "@/db/schema";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, gte, lt } from "drizzle-orm";
 import { PayrollTabs } from "./payroll-tabs";
 import { SalaryView } from "./payroll/salary-view";
 import { MySalaryView } from "./payroll/my-salary-view";
 import { AdminAttendanceView } from "./attendance/admin-attendance-view";
 import { MyAttendanceView } from "./attendance/my-attendance-view";
 import { buildAttendanceReport, calculateSalary, currentMonth, todayString, type WorkSchedule } from "./attendance/attendance-helpers";
+import { getCalendarSyncUrl, autoCloseStaleAttendance } from "./attendance/attendance-actions";
 import type { PendingLeaveRow } from "./attendance/leave-approvals";
 import type { EmployeeRow } from "./attendance/employees-panel";
 
@@ -32,16 +33,29 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     redirect("/");
   }
 
+  // Close out anyone who forgot to check out past their scheduled shift end
+  // before we read attendance for this page (see attendance-actions.ts).
+  await autoCloseStaleAttendance();
+
   const scheduleRows = await db.query.workSchedules.findMany({ with: { days: true } });
   const schedules: WorkSchedule[] = scheduleRows.map((r) => ({
     id: r.id,
     effectiveFrom: r.effectiveFrom,
+    appliedAt: r.appliedAt,
+    isActive: r.isActive,
     label: r.label,
     days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
   }));
 
-  const offDayRows = await db.query.offDays.findMany();
-  const offDaysList = offDayRows.map((d) => d.dayOfWeek);
+  const offDateRows = await db.query.offDates.findMany();
+  const offDatesList = offDateRows.map((d) => d.date);
+  const offDatesForUi = offDateRows.map((d) => ({ date: d.date, label: d.label, source: d.source }));
+  const calendarSyncUrl = await getCalendarSyncUrl();
+
+  const y = parseInt(month.slice(0, 4), 10);
+  const m = parseInt(month.slice(5, 7), 10);
+  const nextMonthStart = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`;
+  const monthStart = `${month}-01`;
 
   let attendanceContent: ReactNode;
   let payrollContent: ReactNode;
@@ -49,7 +63,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
   if (role === "admin") {
     const [employeeRows, monthAttendance, approvedLeaves, pendingLeaveRows] = await Promise.all([
       db.query.employees.findMany({ with: { user: true } }),
-      db.query.attendance.findMany({ where: like(attendance.date, `${month}%`) }),
+      db.query.attendance.findMany({ where: and(gte(attendance.date, monthStart), lt(attendance.date, nextMonthStart)) }),
       db.query.leaveRequests.findMany({ where: eq(leaveRequests.status, "approved") }),
       db.query.leaveRequests.findMany({
         where: eq(leaveRequests.status, "pending"),
@@ -65,7 +79,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       (l) => l.fromDate.slice(0, 7) <= month && l.toDate.slice(0, 7) >= month
     );
 
-    const employeeList = employeeRows.map((e) => ({ id: e.id, name: e.user.name, designation: e.designation }));
+    const employeeList = employeeRows.map((e) => ({ id: e.id, name: e.user.name, designation: e.designation, joinDate: e.joinDate }));
 
     const rawRecords = monthAttendance.map((a) => ({
       employeeId: a.employeeId,
@@ -82,7 +96,7 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       rawRecords,
       schedules,
       approvedLeaves.map((l) => ({ employeeId: l.employeeId, fromDate: l.fromDate, toDate: l.toDate })),
-      offDaysList
+      offDatesList
     );
 
     const pendingLeaves: PendingLeaveRow[] = pendingLeaveRowsThisMonth.map((l) => ({
@@ -110,7 +124,8 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
         pendingLeaves={pendingLeaves}
         employees={employeesForPanel}
         schedules={schedules}
-        offDays={offDaysList}
+        offDates={offDatesForUi}
+        calendarSyncUrl={calendarSyncUrl}
       />
     );
 
@@ -122,12 +137,13 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           designation: e.designation,
           basicSalary: e.basicSalary,
           allowances: e.allowances,
+          joinDate: e.joinDate,
         },
         month,
         rawRecords,
         schedules,
         approvedLeaves.filter((l) => l.employeeId === e.id).map((l) => ({ fromDate: l.fromDate, toDate: l.toDate })),
-        offDaysList
+        offDatesList
       )
     );
 
@@ -146,7 +162,11 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     } else {
       const [attendanceRows, myLeaves] = await Promise.all([
         db.query.attendance.findMany({
-          where: and(eq(attendance.employeeId, employee.id), like(attendance.date, `${month}%`)),
+          where: and(
+            eq(attendance.employeeId, employee.id),
+            gte(attendance.date, monthStart),
+            lt(attendance.date, nextMonthStart)
+          ),
         }),
         db.query.leaveRequests.findMany({
           where: eq(leaveRequests.employeeId, employee.id),
@@ -175,12 +195,12 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
       }));
 
       const history = buildAttendanceReport(
-        [{ id: employee.id, name: "", designation: "" }],
+        [{ id: employee.id, name: "", designation: "", joinDate: employee.joinDate }],
         month,
         rawRecords,
         schedules,
         approvedOwnLeaves,
-        offDaysList
+        offDatesList
       );
 
       attendanceContent = (
@@ -197,12 +217,13 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
           designation: employee.designation,
           basicSalary: employee.basicSalary,
           allowances: employee.allowances,
+          joinDate: employee.joinDate,
         },
         month,
         rawRecords,
         schedules,
         approvedOwnLeaves.map((l) => ({ fromDate: l.fromDate, toDate: l.toDate })),
-        offDaysList
+        offDatesList
       );
 
       payrollContent = <MySalaryView month={month} salary={salary} />;

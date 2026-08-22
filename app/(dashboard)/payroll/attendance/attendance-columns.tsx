@@ -6,6 +6,7 @@ import { formatDuration, STATUS_LABELS, type AttendanceStatus } from "./attendan
 
 export type AttendanceRow = {
   key: string; // `${employeeId}-${date}`
+  employeeId: number;
   employeeName: string;
   designation: string;
   date: string;

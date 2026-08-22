@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/auto-checkout",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/monthly-attendance",
+      "schedule": "50 23 L * *"
+    }
+  ]
+}

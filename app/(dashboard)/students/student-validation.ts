@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
 // Fee is optional on the form — if left blank, the student's fee falls back
 // to their class's fee structure amount when fees are generated.
 const feeField = z
@@ -18,6 +20,9 @@ export const studentSchema = z.object({
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
   classId: z.string().min(1, "Select a class"),
   fee: feeField,
+  admissionDate: z.string().regex(dateRegex, "Select a valid date"),
+  photoUrl: z.string().optional(),
+  schoolName: z.string().optional(),
 });
 
 export type StudentFormValues = z.infer<typeof studentSchema>;
@@ -32,6 +37,9 @@ export const studentUpdateSchema = z.object({
   classId: z.string().min(1, "Select a class"),
   rollNumber: z.string().min(1, "Roll number is required"),
   fee: feeField,
+  admissionDate: z.string().regex(dateRegex, "Select a valid date"),
+  photoUrl: z.string().optional(),
+  schoolName: z.string().optional(),
 });
 
 export type StudentUpdateFormValues = z.infer<typeof studentUpdateSchema>;

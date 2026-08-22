@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/db";
-import { fees, students, feeStructures } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { fees, students, feeStructures, users } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { isPgUniqueViolation } from "@/lib/db-errors";
 import {
@@ -21,6 +21,8 @@ type ActionResult<T extends Record<string, unknown>> =
 // Creates a `fees` row for every student for the given month, using their
 // class's fee structure amount as the default. Students that already have a
 // row for that month are skipped (safe to click "Generate" again).
+import { sendNotificationToMultiple } from "@/lib/notifications";
+
 export async function generateFeesForMonth(formData: unknown): Promise<ActionResult<{ month: string }>> {
   const parsed = generateFeesSchema.safeParse(formData);
   if (!parsed.success) {
@@ -29,8 +31,17 @@ export async function generateFeesForMonth(formData: unknown): Promise<ActionRes
   const { month } = parsed.data;
 
   try {
-    const [allStudents, structures, existing] = await Promise.all([
-      db.query.students.findMany({ columns: { id: true, classId: true, fee: true } }),
+    const [allStudentsRows, structures, existing] = await Promise.all([
+      db
+        .select({ id: students.id, userId: students.userId, classId: students.classId, fee: students.fee })
+        .from(students)
+        .innerJoin(users, eq(students.userId, users.id))
+        .where(
+          and(
+            eq(users.isActive, true),
+            eq(students.status, "active")
+          )
+        ),
       db.query.feeStructures.findMany(),
       db.query.fees.findMany({ where: eq(fees.month, month), columns: { studentId: true } }),
     ]);
@@ -38,7 +49,7 @@ export async function generateFeesForMonth(formData: unknown): Promise<ActionRes
     const structureByClass = new Map(structures.map((s) => [s.classId, s.amount]));
     const existingStudentIds = new Set(existing.map((f) => f.studentId));
 
-    const toInsert = allStudents
+    const toInsert = allStudentsRows
       .filter((s) => !existingStudentIds.has(s.id))
       .map((s) => ({
         studentId: s.id,
@@ -50,6 +61,20 @@ export async function generateFeesForMonth(formData: unknown): Promise<ActionRes
 
     if (toInsert.length > 0) {
       await db.insert(fees).values(toInsert);
+      
+      const userIdsToNotify = toInsert.map((t) => {
+        const student = allStudentsRows.find(s => s.id === t.studentId);
+        return student?.userId;
+      }).filter(Boolean) as number[];
+
+      if (userIdsToNotify.length > 0) {
+        await sendNotificationToMultiple(
+          userIdsToNotify,
+          "Fee Generated",
+          `Your fee for ${month} has been generated.`,
+          "/dashboard"
+        );
+      }
     }
 
     revalidatePath("/accounts/fees");

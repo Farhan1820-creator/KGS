@@ -5,14 +5,14 @@ import { expenses } from "@/db/schema";
 import { and, gte, lte, eq } from "drizzle-orm";
 import { ExpensesClient } from "./expenses-client";
 import type { ExpenseRow } from "./expense-columns";
-import { isExpenseRange, dateBoundsForRange, ExpenseRange } from "./expense-range";
+import { currentMonth, dateBoundsForMonthRange } from "./expense-range";
 
 export const dynamic = "force-dynamic";
 
 interface ExpensesPageProps {
   searchParams: Promise<{
-    range?: string;
-    date?: string;
+    from?: string;
+    to?: string;
     categoryId?: string;
     subCategoryId?: string;
   }>;
@@ -24,9 +24,9 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   if (session.user.role !== "admin") redirect("/");
 
   const params = await searchParams;
-  const range: ExpenseRange = isExpenseRange(params.range) ? params.range : "this_month";
-  const date = params.date; // specific date overrides the range when set
-  const { start, end } = date ? { start: date, end: date } : dateBoundsForRange(range);
+  const from = params.from || currentMonth();
+  const to = params.to || currentMonth();
+  const { start, end } = dateBoundsForMonthRange(from, to);
 
   const whereClauses = [gte(expenses.date, start), lte(expenses.date, end)];
   if (params.categoryId) whereClauses.push(eq(expenses.categoryId, Number(params.categoryId)));
@@ -59,8 +59,8 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
       initialData={data}
       categories={categories}
       subCategories={subCategories}
-      range={range}
-      date={date}
+      from={from}
+      to={to}
       categoryId={params.categoryId}
       subCategoryId={params.subCategoryId}
     />

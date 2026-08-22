@@ -36,7 +36,6 @@ export type EmployeeSettingsFormValues = z.infer<typeof employeeSettingsSchema>;
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const workScheduleSchema = z.object({
-  effectiveFrom: z.string().regex(dateRegex, "Select a valid date"),
   label: z.string().optional(),
   days: z
     .array(
@@ -49,3 +48,32 @@ export const workScheduleSchema = z.object({
     .min(1, "Select at least one working day"),
 });
 export type WorkScheduleFormValues = z.infer<typeof workScheduleSchema>;
+
+export const calendarSyncSchema = z.object({
+  icalUrl: z
+    .string()
+    .trim()
+    .url("Enter a valid calendar URL")
+    .refine((v) => v.startsWith("http://") || v.startsWith("https://"), "Enter a valid calendar URL"),
+});
+export type CalendarSyncFormValues = z.infer<typeof calendarSyncSchema>;
+
+export const offDateSchema = z.object({
+  date: z.string().regex(dateRegex, "Select a valid date"),
+  label: z.string().max(150).optional(),
+});
+export type OffDateFormValues = z.infer<typeof offDateSchema>;
+
+// Admin manually editing/overriding one employee's attendance for one date.
+// Status is no longer picked directly — it's derived server-side from the
+// times (see updateAttendanceRecord): both times present -> present/half_day
+// based on hours worked; no times -> "leave" if isLeave is checked, else
+// "absent". isLeave is ignored if both times are given.
+export const attendanceEditSchema = z.object({
+  employeeId: z.coerce.number().int().positive(),
+  date: z.string().regex(dateRegex, "Select a valid date"),
+  checkIn: z.union([z.string().regex(timeRegex, "Invalid time"), z.literal("")]).optional(),
+  checkOut: z.union([z.string().regex(timeRegex, "Invalid time"), z.literal("")]).optional(),
+  isLeave: z.boolean().optional().default(false),
+});
+export type AttendanceEditFormValues = z.infer<typeof attendanceEditSchema>;

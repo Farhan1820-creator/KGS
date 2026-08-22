@@ -26,6 +26,8 @@ export default async function TeachersPage() {
     subjectId: t.subjectId,
     subjectName: t.subject?.name ?? "—",
     teacherId: t.teacherId,
+    joinDate: t.joinDate,
+    isActive: t.user.isActive,
   }));
 
   return <TeachersClient initialData={data} subjects={subjectList} />;

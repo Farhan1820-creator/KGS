@@ -1,40 +1,48 @@
-// Mirrors app/(dashboard)/accounts/fees/fee-range.ts but works with full
-// "YYYY-MM-DD" dates (expenses can happen any day of the month) instead of
-// "YYYY-MM" months.
+// Shared helpers for the expenses page's month-range filtering. Mirrors
+// app/(dashboard)/accounts/fees/fee-range.ts but expands a "YYYY-MM" from/to
+// pair into full "YYYY-MM-DD" date bounds (expenses can happen any day of
+// the month, unlike fees which are one record per month).
 
-export type ExpenseRange = "this_month" | "last_3" | "last_6" | "this_year";
-
-export const expenseRangeOptions: { value: ExpenseRange; label: string }[] = [
-  { value: "this_month", label: "This Month" },
-  { value: "last_3", label: "Last 3 Months" },
-  { value: "last_6", label: "Last 6 Months" },
-  { value: "this_year", label: "This Year" },
-];
+export function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
 
 function toDateString(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Returns the [start, end] (inclusive) date bounds for a range, anchored to today.
-export function dateBoundsForRange(range: ExpenseRange): { start: string; end: string } {
-  const now = new Date();
-  const end = toDateString(now);
+// Returns the [start, end] (inclusive) date bounds covering every day in
+// months `from` through `to`. If `to` is before `from`, they're swapped.
+export function dateBoundsForMonthRange(from: string, to: string): { start: string; end: string } {
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
 
-  if (range === "this_month") {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { start: toDateString(start), end };
-  }
+  const fromTotal = fy * 12 + (fm - 1);
+  const toTotal = ty * 12 + (tm - 1);
+  const [loTotal, hiTotal] = fromTotal <= toTotal ? [fromTotal, toTotal] : [toTotal, fromTotal];
 
-  if (range === "this_year") {
-    const start = new Date(now.getFullYear(), 0, 1);
-    return { start: toDateString(start), end };
-  }
+  const loYear = Math.floor(loTotal / 12);
+  const loMonth = loTotal % 12;
+  const hiYear = Math.floor(hiTotal / 12);
+  const hiMonth = hiTotal % 12;
 
-  const monthsBack = range === "last_3" ? 2 : 5; // inclusive of current month
-  const start = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
-  return { start: toDateString(start), end };
+  const start = new Date(loYear, loMonth, 1);
+  const end = new Date(hiYear, hiMonth + 1, 0); // last day of hi month
+
+  return { start: toDateString(start), end: toDateString(end) };
 }
 
-export function isExpenseRange(value: string | undefined): value is ExpenseRange {
-  return value === "this_month" || value === "last_3" || value === "last_6" || value === "this_year";
+// Used by the admin dashboard chart (unrelated to the expenses page filters,
+// which now only expose an explicit from/to month range).
+export function dateBoundsForLastNMonths(n: number): { start: string; end: string } {
+  const now = new Date();
+  const to = currentMonth();
+  const fromDate = new Date(now.getFullYear(), now.getMonth() - (n - 1), 1);
+  const from = `${fromDate.getFullYear()}-${String(fromDate.getMonth() + 1).padStart(2, "0")}`;
+  return dateBoundsForMonthRange(from, to);
+}
+
+export function dateBoundsForCurrentMonth(): { start: string; end: string } {
+  return dateBoundsForMonthRange(currentMonth(), currentMonth());
 }

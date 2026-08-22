@@ -18,15 +18,15 @@ import { ExpenseDialog, ExpenseEditTarget } from "./expense-dialog";
 import { ExpenseDetailDialog } from "./expense-detail-dialog";
 import { CategoryDialog, ExpenseCategory, ExpenseSubCategory } from "./category-dialog";
 import { deleteExpense } from "./expense-actions";
-import { expenseRangeOptions, ExpenseRange } from "./expense-range";
+import { currentMonth } from "./expense-range";
 import { Settings2, Plus } from "lucide-react";
 
 interface ExpensesClientProps {
   initialData: ExpenseRow[];
   categories: ExpenseCategory[];
   subCategories: ExpenseSubCategory[];
-  range: ExpenseRange;
-  date?: string; // specific date override — filters that exact day
+  from: string; // "YYYY-MM"
+  to: string; // "YYYY-MM"
   categoryId?: string;
   subCategoryId?: string;
 }
@@ -35,8 +35,8 @@ export function ExpensesClient({
   initialData,
   categories,
   subCategories,
-  range,
-  date,
+  from,
+  to,
   categoryId,
   subCategoryId,
 }: ExpensesClientProps) {
@@ -50,20 +50,20 @@ export function ExpensesClient({
 
   function updateParams(patch: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const next = { range, date, categoryId, subCategoryId, ...patch };
-    if (next.range) params.set("range", next.range);
-    if (next.date) params.set("date", next.date);
+    const next = { from, to, categoryId, subCategoryId, ...patch };
+    if (next.from) params.set("from", next.from);
+    if (next.to) params.set("to", next.to);
     if (next.categoryId) params.set("categoryId", next.categoryId);
     if (next.subCategoryId) params.set("subCategoryId", next.subCategoryId);
     router.push(`/accounts/expenses?${params.toString()}`);
   }
 
-  function handleRangeChange(value: ExpenseRange) {
-    updateParams({ range: value, date: undefined });
+  function handleFromChange(value: string) {
+    updateParams({ from: value || undefined });
   }
 
-  function handleDateChange(value: string) {
-    updateParams({ date: value || undefined });
+  function handleToChange(value: string) {
+    updateParams({ to: value || undefined });
   }
 
   function handleCategoryChange(value: string) {
@@ -75,7 +75,7 @@ export function ExpensesClient({
   }
 
   function clearFilters() {
-    router.push(`/accounts/expenses?range=this_month`);
+    router.push(`/accounts/expenses?from=${currentMonth()}&to=${currentMonth()}`);
   }
 
   const visibleSubCategories = useMemo(
@@ -147,26 +147,23 @@ export function ExpensesClient({
 
       {/* Filters header */}
       <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
-<Select value={range} onValueChange={(v: string | null) => handleRangeChange(v as ExpenseRange)}>
-            <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Range" />
-          </SelectTrigger>
-          <SelectContent>
-            {expenseRangeOptions.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          type="date"
-          value={date ?? ""}
-          onChange={(e) => handleDateChange(e.target.value)}
-          className="w-full sm:w-44"
-          title="Pick a specific date"
-        />
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <Input
+            type="month"
+            value={from}
+            onChange={(e) => handleFromChange(e.target.value)}
+            className="w-full sm:w-40"
+            title="From month"
+          />
+          <span className="text-sm text-muted-foreground">to</span>
+          <Input
+            type="month"
+            value={to}
+            onChange={(e) => handleToChange(e.target.value)}
+            className="w-full sm:w-40"
+            title="To month"
+          />
+        </div>
 
 <Select value={categoryId ?? "all"} onValueChange={(v: string | null) => handleCategoryChange(v ?? "all")}>
             <SelectTrigger className="w-full sm:w-48">

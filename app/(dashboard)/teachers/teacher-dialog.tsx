@@ -10,11 +10,17 @@ import {
   TeacherFormValues,
   TeacherUpdateFormValues,
 } from "./teacher-validation";
+
+// One form handles both create and edit modes by swapping the resolver.
+// Merged type is the union of all fields from both schemas so register("teacherId") is valid.
+type TeacherAnyFormValues = TeacherFormValues & Partial<TeacherUpdateFormValues>;
+
 import { createTeacher, updateTeacher, previewNextTeacherId } from "./teacher-actions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,23 +28,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { TeacherRow } from "./teacher-columns";
 
-// Editing a teacher we already have on hand — id plus the fields the form
-// needs to pre-fill. Email/password aren't edited here.
-export interface TeacherEditTarget {
-  id: number;
-  name: string;
-  contactNumber: string | null;
-  subjectId: number | null;
-  teacherId: string | null;
-}
+type DialogMode = "view" | "edit" | "create";
 
 interface TeacherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   subjects: { id: number; name: string }[];
   onSaved: () => void;
-  teacher?: TeacherEditTarget | null; // when set, dialog runs in edit mode
+  teacher?: TeacherRow | null; // null => create mode
+  mode?: "view" | "edit"; // initial mode when `teacher` is set; ignored for create
+}
+
+function todayDate(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
 }
 
 const emptyDefaults: TeacherFormValues = {
@@ -47,10 +51,34 @@ const emptyDefaults: TeacherFormValues = {
   password: "",
   contactNumber: "",
   subjectId: "",
+  joinDate: todayDate(),
 };
 
-export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher }: TeacherDialogProps) {
-  const isEdit = Boolean(teacher);
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="font-medium">{value || "—"}</p>
+    </div>
+  );
+}
+
+function initialsOf(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+}
+
+// One dialog for viewing, editing, and creating a teacher. Opens in "view"
+// mode (a read-only summary) with an Edit button that switches the same
+// dialog into the form — no separate detail dialog to keep in sync.
+export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, mode: initialMode = "view" }: TeacherDialogProps) {
+  const isCreate = !teacher;
+  const [mode, setMode] = useState<DialogMode>(isCreate ? "create" : initialMode);
+  const isFormMode = mode !== "view";
   const [idPreview, setIdPreview] = useState<string | null>(null);
 
   const {
@@ -60,13 +88,15 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher }
     setError,
     control,
     formState: { errors, isSubmitting },
-  } = useForm<TeacherFormValues>({
-    resolver: zodResolver(isEdit ? teacherUpdateSchema : teacherSchema) as unknown as Resolver<TeacherFormValues>,
-    defaultValues: emptyDefaults,
+  } = useForm<TeacherAnyFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver((isCreate ? teacherSchema : teacherUpdateSchema) as any) as Resolver<TeacherAnyFormValues>,
+    defaultValues: emptyDefaults as TeacherAnyFormValues,
   });
 
   useEffect(() => {
     if (!open) return;
+    setMode(isCreate ? "create" : initialMode);
     if (teacher) {
       reset({
         name: teacher.name,
@@ -76,16 +106,18 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher }
         subjectId: teacher.subjectId ? String(teacher.subjectId) : "",
         // carried through to updateTeacher via the update schema's teacherId field
         teacherId: teacher.teacherId ?? "",
-      } as unknown as TeacherFormValues);
+        joinDate: teacher.joinDate ?? todayDate(),
+      });
     } else {
       reset(emptyDefaults);
     }
-  }, [open, teacher, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, teacher, initialMode]);
 
   // Show a live preview of the teacher ID a new teacher will get — the
   // actual ID is only reserved server-side at submit time.
   useEffect(() => {
-    if (!open || isEdit) {
+    if (!open || mode !== "create") {
       setIdPreview(null);
       return;
     }
@@ -96,22 +128,22 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher }
     return () => {
       cancelled = true;
     };
-  }, [open, isEdit]);
+  }, [open, mode]);
 
-  async function onSubmit(values: TeacherFormValues) {
-    const res = isEdit && teacher
+  async function onSubmit(values: TeacherAnyFormValues) {
+    const res = mode === "edit" && teacher
       ? await updateTeacher(teacher.id, values as unknown as TeacherUpdateFormValues)
-      : await createTeacher(values);
+      : await createTeacher(values as TeacherFormValues);
 
     if (!res.success) {
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
-        setError(key as keyof TeacherFormValues, { message: (msgs as string[] | undefined)?.[0] });
+        setError(key as keyof TeacherAnyFormValues, { message: (msgs as string[] | undefined)?.[0] });
       });
       toast.error(res.errors?.root?.[0] ?? "Please fix the errors and try again");
       return;
     }
 
-    toast.success(isEdit ? "Teacher updated" : "Teacher created");
+    toast.success(mode === "edit" ? "Teacher updated" : "Teacher created");
     reset(emptyDefaults);
     onOpenChange(false);
     onSaved();
@@ -119,85 +151,142 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl lg:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Teacher" : "Add Teacher"}</DialogTitle>
+          <div className="flex items-start justify-between gap-4 pr-8">
+            <DialogTitle>
+              {mode === "create" ? "Add Teacher" : mode === "edit" ? "Edit Teacher" : "Teacher Details"}
+            </DialogTitle>
+            {mode === "view" && (
+              <Button type="button" size="sm" variant="outline" onClick={() => setMode("edit")}>
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-          <div className="space-y-1">
-            <Label htmlFor="name">Full name</Label>
-            <Input id="name" placeholder="e.g. Sara Khan" {...register("name")} />
-            {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
-          </div>
-
-          {!isEdit && (
-            <>
-              <div className="space-y-1">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="teacher@example.com" {...register("email")} />
-                {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
-                {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-              </div>
-            </>
-          )}
-
-          <div className="space-y-1">
-            <Label htmlFor="contactNumber">Contact number</Label>
-            <Input id="contactNumber" placeholder="e.g. +92 300 1234567" {...register("contactNumber")} />
-            {errors.contactNumber && <p className="text-sm text-red-500">{errors.contactNumber.message}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <Label>Subject</Label>
-            <Controller
-              control={control}
-              name="subjectId"
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {subjects.map((s) => (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId.message}</p>}
-          </div>
-
-          {isEdit ? (
-            <div className="space-y-1">
-              <Label htmlFor="teacherId">Teacher ID</Label>
-              <Input id="teacherId" placeholder="e.g. 2026-TCH-007" {...register("teacherId")} />
-              {errors.teacherId && <p className="text-sm text-red-500">{errors.teacherId.message}</p>}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1fr_132px] sm:gap-8">
+          {/* Initials avatar — top-right on landscape screens, matching the
+              student dialog's photo slot even though teachers have no photo. */}
+          <div className="order-1 flex justify-center sm:order-2 sm:justify-end">
+            <div
+              className="flex items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/40 text-2xl font-semibold text-muted-foreground/70"
+              style={{ width: 132, height: 132 }}
+            >
+              {initialsOf(teacher?.name ?? "?")}
             </div>
-          ) : (
-            <div className="space-y-1">
-              <Label>Teacher ID</Label>
-              <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
-                {idPreview ?? "Generating..."}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Auto-assigned when the teacher is created — not editable here.
-              </p>
-            </div>
-          )}
+          </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (isEdit ? "Saving..." : "Creating...") : isEdit ? "Save Changes" : "Create Teacher"}
-          </Button>
-        </form>
+          <div className="order-2 sm:order-1">
+            {mode === "view" && teacher ? (
+              <div className="grid grid-cols-1 gap-4 py-1 text-sm sm:grid-cols-2">
+                <Field label="Full Name" value={teacher.name} />
+                <Field label="Teacher ID" value={teacher.teacherId ?? ""} />
+                <Field label="Email" value={teacher.email} />
+                <Field label="Contact Number" value={teacher.contactNumber ?? ""} />
+                <Field label="Subject" value={teacher.subjectName ?? ""} />
+                <Field label="Join Date" value={teacher.joinDate ?? ""} />
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="max-h-[65vh] space-y-4 overflow-y-auto pr-1 sm:max-h-[60vh]"
+              >
+                <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label htmlFor="name">Full name</Label>
+                    <Input id="name" placeholder="e.g. Sara Khan" {...register("name")} />
+                    {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
+                  </div>
+
+                  {mode === "create" && (
+                    <>
+                      <div className="space-y-1">
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" placeholder="teacher@example.com" {...register("email")} />
+                        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label htmlFor="password">Password</Label>
+                        <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
+                        {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                      </div>
+                    </>
+                  )}
+
+                  <div className="space-y-1">
+                    <Label htmlFor="contactNumber">Contact number</Label>
+                    <Input id="contactNumber" placeholder="e.g. +92 300 1234567" {...register("contactNumber")} />
+                    {errors.contactNumber && <p className="text-sm text-red-500">{errors.contactNumber.message}</p>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label>Subject</Label>
+                    <Controller
+                      control={control}
+                      name="subjectId"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subject" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {subjects.map((s) => (
+                              <SelectItem key={s.id} value={String(s.id)}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId.message}</p>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="joinDate">Join date</Label>
+                    <Input id="joinDate" type="date" {...register("joinDate")} />
+                    {errors.joinDate && <p className="text-sm text-red-500">{errors.joinDate.message}</p>}
+                  </div>
+
+                  {mode === "edit" ? (
+                    <div className="space-y-1">
+                      <Label htmlFor="teacherId">Teacher ID</Label>
+                      <Input id="teacherId" placeholder="e.g. 2026-TCH-007" {...register("teacherId")} />
+                      {errors.teacherId && <p className="text-sm text-red-500">{errors.teacherId.message}</p>}
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Label>Teacher ID</Label>
+                      <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
+                        {idPreview ?? "Generating..."}
+                      </div>
+                    </div>
+                  )}
+
+                  {mode === "create" && (
+                    <p className="text-xs text-muted-foreground sm:col-span-2 sm:-mt-2">
+                      Teacher ID is auto-assigned when the teacher is created — not editable here.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  {mode === "edit" && (
+                    <Button type="button" variant="outline" className="flex-1" onClick={() => setMode("view")}>
+                      Cancel
+                    </Button>
+                  )}
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                    {isSubmitting ? (mode === "edit" ? "Saving..." : "Creating...") : mode === "edit" ? "Save Changes" : "Create Teacher"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

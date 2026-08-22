@@ -70,15 +70,15 @@ export function SelfAttendanceCard({
   const displaySeconds = isLive ? liveSeconds : todaySecondsWorked;
 
   return (
-    <div className="rounded-lg border p-4 space-y-4">
+    <div className="rounded-xl shadow-md border border-muted/50 p-5 space-y-4 bg-card">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium">Today's Attendance</h3>
+          <h3 className="text-base font-semibold">Today&apos;s Attendance</h3>
           <p className="text-xs text-muted-foreground">
             {requiredSecondsToday ? `Today's requirement: ${formatDuration(requiredSecondsToday)}` : "No shift scheduled today"}
           </p>
         </div>
-        {todayStatus && <Badge variant="outline">{STATUS_LABELS[todayStatus]}</Badge>}
+        {todayStatus && <Badge variant="secondary" className="shadow-sm">{STATUS_LABELS[todayStatus]}</Badge>}
       </div>
 
       <div className="flex flex-wrap items-center gap-6 text-sm">
@@ -97,7 +97,7 @@ export function SelfAttendanceCard({
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={handleCheckIn} disabled={isPending || !!todayCheckIn} size="sm">
+        <Button onClick={handleCheckIn} disabled={isPending || !!todayCheckIn} size="sm" className="shadow-sm">
           <LogIn className="h-4 w-4 mr-1" />
           Check In
         </Button>
@@ -106,12 +106,13 @@ export function SelfAttendanceCard({
           disabled={isPending || !todayCheckIn || !!todayCheckOut}
           variant="outline"
           size="sm"
+          className="shadow-sm border-muted/50"
         >
           <LogOut className="h-4 w-4 mr-1" />
           Check Out
         </Button>
         {!todayCheckIn && (
-          <span className="flex items-center text-xs text-muted-foreground gap-1">
+          <span className="flex items-center text-xs text-muted-foreground gap-1 ml-2">
             <Clock className="h-3 w-3" /> Not checked in yet today
           </span>
         )}

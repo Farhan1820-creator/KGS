@@ -15,7 +15,7 @@ export function MySalaryView({ month, salary }: MySalaryViewProps) {
       <div className="rounded-lg border p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium">Salary — {month}</h3>
-          <span className="text-2xl font-semibold">{money(salary.totalSalary)}</span>
+          <span className="text-2xl font-semibold">Rs.{money(salary.totalSalary)}</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -44,11 +44,11 @@ export function MySalaryView({ month, salary }: MySalaryViewProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Basic (Full)</p>
-            <p className="font-medium">{money(salary.basicSalary)}</p>
+            <p className="font-medium">Rs.{money(salary.basicSalary)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Earned Basic</p>
-            <p className="font-medium">{money(salary.earnedBasic)}</p>
+            <p className="font-medium">Rs.{money(salary.earnedBasic)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Allowances</p>

@@ -17,7 +17,7 @@ import { getFeeColumns, FeeRow } from "./fee-columns";
 import { FeeStructureDialog } from "./fee-structure-dialog";
 import { FeeDetailDialog } from "./fee-detail-dialog";
 import { generateFeesForMonth, markFeePaid, markFeeUnpaid } from "./fee-actions";
-import { feeRangeOptions, currentMonth, FeeRange } from "./fee-range";
+import { currentMonth } from "./fee-range";
 import { Settings2, Sparkles } from "lucide-react";
 
 interface FeesClientProps {
@@ -25,8 +25,8 @@ interface FeesClientProps {
   classes: { id: number; name: string; section: string | null }[];
   students: { id: number; name: string }[];
   structures: { classId: number; amount: number }[];
-  range: FeeRange;
-  month?: string; // specific month override, if set takes priority over range
+  from: string; // "YYYY-MM", start of the month range (inclusive)
+  to: string; // "YYYY-MM", end of the month range (inclusive)
   studentId?: string;
   classId?: string;
 }
@@ -36,41 +36,40 @@ export function FeesClient({
   classes,
   students,
   structures,
-  range,
-  month,
+  from,
+  to,
   studentId,
   classId,
 }: FeesClientProps) {
   const router = useRouter();
   const [structureDialogOpen, setStructureDialogOpen] = useState(false);
   const [detailRow, setDetailRow] = useState<FeeRow | null>(null);
-  const [generateMonth, setGenerateMonth] = useState(month || currentMonth());
+  const [generateMonth, setGenerateMonth] = useState(currentMonth());
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function updateParams(patch: Record<string, string | undefined>) {
     const params = new URLSearchParams();
     const next = {
-      range,
-      month,
+      from,
+      to,
       studentId,
       classId,
       ...patch,
     };
-    if (next.range) params.set("range", next.range);
-    if (next.month) params.set("month", next.month);
+    if (next.from) params.set("from", next.from);
+    if (next.to) params.set("to", next.to);
     if (next.studentId) params.set("studentId", next.studentId);
     if (next.classId) params.set("classId", next.classId);
     router.push(`/accounts/fees?${params.toString()}`);
   }
 
-  function handleRangeChange(value: FeeRange) {
-    // Picking a shortcut range clears any specific-month override.
-    updateParams({ range: value, month: undefined });
+  function handleFromChange(value: string) {
+    updateParams({ from: value || undefined });
   }
 
-  function handleMonthChange(value: string) {
-    updateParams({ month: value || undefined });
+  function handleToChange(value: string) {
+    updateParams({ to: value || undefined });
   }
 
   function handleStudentChange(value: string) {
@@ -82,7 +81,7 @@ export function FeesClient({
   }
 
   function clearFilters() {
-    router.push(`/accounts/fees?range=this_month`);
+    router.push(`/accounts/fees?from=${currentMonth()}&to=${currentMonth()}`);
   }
 
   const filteredData = useMemo(() => {
@@ -150,26 +149,23 @@ export function FeesClient({
 
       {/* Filters header */}
       <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
-        <Select value={range} onValueChange={(v:string | null) => handleRangeChange(v as FeeRange)}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Range" />
-          </SelectTrigger>
-          <SelectContent>
-            {feeRangeOptions.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Input
-          type="month"
-          value={month ?? ""}
-          onChange={(e) => handleMonthChange(e.target.value)}
-          className="w-full sm:w-44"
-          title="Pick a specific month"
-        />
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <Input
+            type="month"
+            value={from}
+            onChange={(e) => handleFromChange(e.target.value)}
+            className="w-full sm:w-40"
+            title="From month"
+          />
+          <span className="text-sm text-muted-foreground">to</span>
+          <Input
+            type="month"
+            value={to}
+            onChange={(e) => handleToChange(e.target.value)}
+            className="w-full sm:w-40"
+            title="To month"
+          />
+        </div>
 
         <Select value={classId ?? "all"} onValueChange={(v:string | null) => handleClassChange(v ?? "all")}>
           <SelectTrigger className="w-full sm:w-44">
