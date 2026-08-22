@@ -111,6 +111,23 @@ export function StudentDialog({
     defaultValues: emptyDefaults as StudentAnyFormValues,
   });
 
+  const nameVal = watch("name");
+  const contactVal = watch("contactNumber");
+
+  // Auto-generate email and password in create mode
+  useEffect(() => {
+    if (mode === "create") {
+      const prefix = (nameVal || "").toLowerCase().replace(/\s+/g, "");
+      setValue("email", prefix ? `${prefix}@student.learnex` : "", { shouldValidate: !!prefix });
+    }
+  }, [nameVal, mode, setValue]);
+
+  useEffect(() => {
+    if (mode === "create") {
+      setValue("password", contactVal || "", { shouldValidate: !!contactVal });
+    }
+  }, [contactVal, mode, setValue]);
+
   // Reset mode + form whenever the dialog opens for a (possibly different) student.
   useEffect(() => {
     if (!open) return;
@@ -295,11 +312,27 @@ export function StudentDialog({
                     {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
-                                      <div className="space-y-1">
-                      <Label htmlFor="email">Email</Label>
+                                                        <div className="space-y-1">
+                    <Label htmlFor="email">Email</Label>
+                    {mode === "create" ? (
+                      <div className="flex items-center h-10">
+                        <Input 
+                          id="email"
+                          type="text"
+                          className="rounded-r-none h-full"
+                          placeholder="student"
+                          value={(watch("email") || "").replace("@student.learnex", "")}
+                          onChange={(e) => setValue("email", e.target.value + "@student.learnex", { shouldValidate: true })}
+                        />
+                        <span className="inline-flex items-center justify-center rounded-r-md border border-l-0 bg-muted px-3 text-sm text-muted-foreground h-full whitespace-nowrap">
+                          @student.learnex
+                        </span>
+                      </div>
+                    ) : (
                       <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
-                      {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-                    </div>
+                    )}
+                    {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                  </div>
                     <div className="space-y-1">
                       <Label htmlFor="password">Password</Label>
                       <Input id="password" type="password" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
