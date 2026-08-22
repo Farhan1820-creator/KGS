@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -312,7 +313,13 @@ export function ScheduleDialog({ open, onOpenChange, schedules, offDates, calend
           <DialogTitle>Schedule & Holidays</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
+        <Tabs defaultValue="schedule" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="schedule">Weekly Schedule</TabsTrigger>
+          <TabsTrigger value="holidays">Holidays</TabsTrigger>
+        </TabsList>
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
+          <TabsContent value="schedule" className="space-y-6 m-0">
           {/* ---- Weekly schedule ---- */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -448,8 +455,9 @@ export function ScheduleDialog({ open, onOpenChange, schedules, offDates, calend
             )}
           </section>
 
-          <div className="border-t" />
+          </TabsContent>
 
+          <TabsContent value="holidays" className="space-y-6 m-0">
           {/* ---- Holidays calendar ---- */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
@@ -567,7 +575,7 @@ export function ScheduleDialog({ open, onOpenChange, schedules, offDates, calend
             </div>
 
             {offDates.length > 0 && (
-              <div className="space-y-1 max-h-28 overflow-y-auto text-xs">
+              <div className="space-y-1 max-h-32 overflow-y-auto text-xs">
                 {offDates
                   .slice()
                   .sort((a, b) => a.date.localeCompare(b.date))
@@ -591,7 +599,9 @@ export function ScheduleDialog({ open, onOpenChange, schedules, offDates, calend
               </div>
             )}
           </section>
+          </TabsContent>
         </div>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

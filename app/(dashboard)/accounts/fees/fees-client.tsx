@@ -16,7 +16,7 @@ import { DataTable } from "@/components/layout/data-table";
 import { getFeeColumns, FeeRow } from "./fee-columns";
 import { FeeStructureDialog } from "./fee-structure-dialog";
 import { FeeDetailDialog } from "./fee-detail-dialog";
-import { generateFeesForMonth, markFeePaid, markFeeUnpaid } from "./fee-actions";
+import { generateFeesForMonth, markFeePaid, markFeeUnpaid, updateFeeAmount } from "./fee-actions";
 import { currentMonth } from "./fee-range";
 import { Settings2, Sparkles } from "lucide-react";
 
@@ -126,6 +126,22 @@ export function FeesClient({
 
   const columns = getFeeColumns({ onTogglePaid: handleTogglePaid });
 
+
+  function handleUpdateAmount(row: FeeRow, newAmount: number) {
+    startTransition(async () => {
+      const result = await updateFeeAmount(row.id, newAmount);
+      if (!result.success) {
+        toast.error("errors" in result && result.errors.root ? result.errors.root[0] : "Failed to update amount");
+        return;
+      }
+      toast.success("Amount updated");
+      if (detailRow && detailRow.id === row.id) {
+        setDetailRow({ ...detailRow, amount: newAmount });
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <div className="page-shell space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -228,10 +244,11 @@ export function FeesClient({
 
       <DataTable columns={columns} data={filteredData} onRowClick={(row) => setDetailRow(row)} />
 
-      <FeeDetailDialog
+            <FeeDetailDialog
         fee={detailRow}
         onOpenChange={(open) => !open && setDetailRow(null)}
         onTogglePaid={handleTogglePaid}
+        onUpdateAmount={handleUpdateAmount}
       />
 
       <FeeStructureDialog

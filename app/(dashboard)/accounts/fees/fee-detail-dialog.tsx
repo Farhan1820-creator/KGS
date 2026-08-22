@@ -9,6 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { Pencil, Check, X } from "lucide-react";
 import type { FeeRow } from "./fee-columns";
 import { formatMonthLabel } from "./fee-range";
 
@@ -16,6 +19,7 @@ interface FeeDetailDialogProps {
   fee: FeeRow | null;
   onOpenChange: (open: boolean) => void;
   onTogglePaid: (row: FeeRow) => void;
+  onUpdateAmount: (row: FeeRow, amount: number) => void;
 }
 
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -27,7 +31,25 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-export function FeeDetailDialog({ fee, onOpenChange, onTogglePaid }: FeeDetailDialogProps) {
+export function FeeDetailDialog({ fee, onOpenChange, onTogglePaid, onUpdateAmount }: FeeDetailDialogProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editAmount, setEditAmount] = useState("");
+
+  useEffect(() => {
+    if (fee) {
+      setEditAmount(fee.amount.toString());
+      setIsEditing(false);
+    }
+  }, [fee]);
+
+  function handleSaveAmount() {
+    const num = Number(editAmount);
+    if (!isNaN(num) && num > 0 && fee) {
+      onUpdateAmount(fee, num);
+      setIsEditing(false);
+    }
+  }
+
   return (
     <Dialog open={Boolean(fee)} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -41,7 +63,35 @@ export function FeeDetailDialog({ fee, onOpenChange, onTogglePaid }: FeeDetailDi
             <DetailRow label="Roll Number">{fee.rollNumber ?? "—"}</DetailRow>
             <DetailRow label="Class">{fee.className ?? "—"}</DetailRow>
             <DetailRow label="Month">{formatMonthLabel(fee.month)}</DetailRow>
-            <DetailRow label="Amount">Rs. {fee.amount.toLocaleString()}</DetailRow>
+                        <div className="flex items-center justify-between py-2 border-b last:border-0">
+              <span className="text-sm text-muted-foreground">Amount</span>
+              <div className="text-sm font-medium flex items-center gap-2">
+                {isEditing ? (
+                  <>
+                    <span className="text-muted-foreground">Rs.</span>
+                    <Input 
+                      type="number" 
+                      className="h-7 w-24 px-2 text-right" 
+                      value={editAmount} 
+                      onChange={(e) => setEditAmount(e.target.value)} 
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveAmount()}
+                      autoFocus
+                    />
+                    <Button size="icon-sm" variant="ghost" onClick={handleSaveAmount} className="h-6 w-6 text-green-600"><Check className="h-4 w-4" /></Button>
+                    <Button size="icon-sm" variant="ghost" onClick={() => setIsEditing(false)} className="h-6 w-6 text-red-600"><X className="h-4 w-4" /></Button>
+                  </>
+                ) : (
+                  <>
+                    <span>Rs. {fee.amount.toLocaleString()}</span>
+                    {fee.status === "unpaid" && (
+                      <Button size="icon-sm" variant="ghost" onClick={() => setIsEditing(true)} className="h-6 w-6 opacity-50 hover:opacity-100">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
             <DetailRow label="Status">
               <Badge
                 className={

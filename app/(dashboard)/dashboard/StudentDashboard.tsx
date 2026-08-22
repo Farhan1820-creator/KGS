@@ -21,46 +21,13 @@ const StudentDashboard = async ({ name }: StudentDashboardProps) => {
       })
     : null;
 
-  let feeCard = null;
+  
   let attendanceCard = null;
   let testReportsCard = null;
 
   if (student) {
     const month = currentMonth();
     
-    // Fee Card
-    const feeRow = await db.query.fees.findFirst({
-      where: and(eq(fees.studentId, student.id), eq(fees.month, month)),
-    });
-
-    feeCard = (
-      <div className="rounded-xl shadow-md border-0 p-5 flex items-start justify-between bg-gradient-to-br from-indigo-600 to-blue-700 text-white">
-        <div className="space-y-1">
-          <p className="text-sm font-medium opacity-90">Fee - {formatMonthLabel(month)}</p>
-          {student.class && (
-            <p className="text-xs opacity-80">
-              Class {student.class.name}
-              {student.class.section ? ` - ${student.class.section}` : ""}
-            </p>
-          )}
-          {feeRow ? (
-            <p className="text-2xl font-bold">Rs. {feeRow.amount.toLocaleString()}</p>
-          ) : (
-            <p className="text-sm opacity-80">No fee record for this month yet.</p>
-          )}
-        </div>
-        {feeRow && (
-          <Badge
-            variant={feeRow.status === "paid" ? "default" : "destructive"}
-            className={`flex items-center gap-1 ${feeRow.status === 'paid' ? 'bg-emerald-500 text-white hover:bg-emerald-600 border-0' : 'bg-rose-500 text-white hover:bg-rose-600 border-0'}`}
-          >
-            {feeRow.status === "paid" && <CheckCircle2 className="h-3 w-3" />}
-            {feeRow.status === "paid" ? "Paid" : "Unpaid"}
-          </Badge>
-        )}
-      </div>
-    );
-
     // Attendance Insights
     const attendanceStats = await db.select({
       status: studentAttendance.status,
@@ -142,20 +109,25 @@ const StudentDashboard = async ({ name }: StudentDashboardProps) => {
 
   return (
     <div className="page-shell space-y-6">
-      <div className="text-3xl text-center py-6 w-full flex items-center justify-center">
-        <h2>
+      <div className="flex flex-col items-center justify-center py-6 w-full space-y-4">
+        {student?.photoUrl ? (
+          <img 
+            src={student.photoUrl} 
+            alt="Profile" 
+            className="w-24 h-24 rounded-full object-cover border-4 border-muted shadow-sm"
+          />
+        ) : (
+          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 shadow-sm">
+            <span className="text-3xl text-muted-foreground font-semibold">{name ? name.charAt(0).toUpperCase() : "?"}</span>
+          </div>
+        )}
+        <h2 className="text-3xl text-center">
           Welcome
           <span className="text-primary font-bold">{name ? `, ${name}` : ""}</span>
         </h2>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-        {feeCard ?? (
-          <div className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-            <Wallet className="h-4 w-4 mx-auto mb-1" />
-            Your student profile isn&apos;t set up yet, so fee details aren&apos;t available.
-          </div>
-        )}
+      <div className="grid gap-6 md:grid-cols-2 items-stretch max-w-4xl mx-auto">
         {attendanceCard}
         {testReportsCard}
       </div>
