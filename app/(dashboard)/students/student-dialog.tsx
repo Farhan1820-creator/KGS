@@ -51,12 +51,13 @@ function todayDate(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
 }
 
-const emptyDefaults: StudentFormValues = {
+const emptyDefaults: StudentAnyFormValues = {
   name: "",
   email: "",
   password: "",
   contactNumber: "",
   classId: "",
+  rollNumber: "",
   fee: "",
   admissionDate: todayDate(),
   photoUrl: "",
