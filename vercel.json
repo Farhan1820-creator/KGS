@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/monthly-attendance",
-      "schedule": "50 23 L * *"
+      "schedule": "0 8 1 * *"
     }
   ]
 }
