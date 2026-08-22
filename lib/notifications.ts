@@ -5,11 +5,18 @@ import { db } from "@/db";
 import { notifications, pushSubscriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-webPush.setVapidDetails(
-  "mailto:admin@example.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "",
-  process.env.VAPID_PRIVATE_KEY || ""
-);
+const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
+const vapidPrivate = process.env.VAPID_PRIVATE_KEY || "";
+
+if (vapidPublic && vapidPrivate) {
+  webPush.setVapidDetails(
+    "mailto:admin@example.com",
+    vapidPublic,
+    vapidPrivate
+  );
+} else {
+  console.warn("VAPID keys not set. Push notifications will not work.");
+}
 
 export async function sendNotification(userId: number, title: string, message: string, link: string = "/") {
   try {
