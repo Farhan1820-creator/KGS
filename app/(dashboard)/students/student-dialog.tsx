@@ -302,6 +302,7 @@ export function StudentDialog({
               </div>
             ) : (
               <form
+                autoComplete="off"
                 onSubmit={handleSubmit(onSubmit)}
                 className="max-h-[65vh] space-y-4 overflow-y-auto pr-1 sm:max-h-[60vh]"
               >
@@ -319,6 +320,8 @@ export function StudentDialog({
                         <Input 
                           id="email"
                           type="text"
+                          autoComplete="off"
+                          data-lpignore="true"
                           className="rounded-r-none h-full"
                           placeholder="student"
                           value={(watch("email") || "").replace("@student.learnex", "")}
@@ -329,13 +332,13 @@ export function StudentDialog({
                         </span>
                       </div>
                     ) : (
-                      <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
+                      <Input id="email" type="email" autoComplete="off" data-lpignore="true" placeholder="student@example.com" {...register("email")} />
                     )}
                     {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
                   </div>
                     <div className="space-y-1">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
+                      <Input id="password" type="password" autoComplete="new-password" data-lpignore="true" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
                       {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
                     </div>
 

@@ -210,6 +210,7 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
               </div>
             ) : (
               <form
+                autoComplete="off"
                 onSubmit={handleSubmit(onSubmit)}
                 className="max-h-[65vh] space-y-4 overflow-y-auto pr-1 sm:max-h-[60vh]"
               >
@@ -237,13 +238,13 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                           </span>
                         </div>
                       ) : (
-                        <Input id="email" type="email" placeholder="teacher@example.com" {...register("email")} />
+                        <Input id="email" type="email" autoComplete="off" data-lpignore="true" placeholder="teacher@example.com" {...register("email")} />
                       )}
                       {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
+                      <Input id="password" type="password" autoComplete="new-password" data-lpignore="true" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
                       {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
                     </div>
 
