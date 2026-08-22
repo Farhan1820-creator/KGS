@@ -15,7 +15,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[#E5EEF7] bg-[#FAFCFF]/85 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-[#E5EEF8] bg-[#FAFCFF]/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-6">
         <a href="#" className="flex items-center gap-2.5">
           <Image src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png" alt="The Learnex Academy logo" width={34} height={34} className="rounded-full" />
