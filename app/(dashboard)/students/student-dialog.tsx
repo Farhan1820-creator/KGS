@@ -118,8 +118,8 @@ export function StudentDialog({
     if (student) {
       reset({
         name: student.name,
-        email: "",
-        password: "",
+        email: student.email || "",
+          password: "",
         contactNumber: student.contactNumber ?? "",
         classId: student.classId ? String(student.classId) : "",
         rollNumber: student.rollNumber ?? "",
@@ -295,21 +295,16 @@ export function StudentDialog({
                     {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
-                  {mode === "create" && (
-                    <>
-                      <div className="space-y-1">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
-                        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
-                        {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-                      </div>
-                    </>
-                  )}
+                                      <div className="space-y-1">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" placeholder="student@example.com" {...register("email")} />
+                      {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" type="password" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
+                      {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                    </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="contactNumber">Contact number</Label>

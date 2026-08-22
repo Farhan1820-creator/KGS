@@ -88,33 +88,41 @@ export async function createStudent(formData: unknown): Promise<StudentActionRes
 
 // Updates a student's editable fields — name, contact, class, roll number,
 // and their individual fee. Email/password are left alone here.
-export async function updateStudent(studentId: number, formData: unknown): Promise<StudentUpdateActionResult> {
-  const parsed = studentUpdateSchema.safeParse(formData);
-  if (!parsed.success) {
-    return { success: false, errors: parsed.error.flatten().fieldErrors };
+  export async function updateStudent(studentId: number, formData: unknown): Promise<StudentUpdateActionResult> {
+    const parsed = studentUpdateSchema.safeParse(formData);
+    if (!parsed.success) {
+      return { success: false, errors: parsed.error.flatten().fieldErrors };
+    }
+  
+    const { email, password, name, contactNumber, classId, rollNumber, fee, admissionDate, photoUrl, schoolName } = parsed.data;
+  
+    try {
+      const student = await db.query.students.findFirst({
+        where: eq(students.id, studentId),
+      });
+      if (!student) return { success: false, errors: { root: ["Student not found."] } };
+  
+      const userUpdate: any = { name, email, contactNumber };
+      if (password && password.trim() !== "") {
+        userUpdate.password = await hash(password, 10);
+      }
+
+      await db.update(users).set(userUpdate).where(eq(users.id, student.userId));
+      await db
+        .update(students)
+        .set({ classId: Number(classId), rollNumber, fee: fee ? Number(fee) : null, admissionDate, photoUrl: photoUrl || null, schoolName: schoolName || null })
+        .where(eq(students.id, studentId));
+  
+      revalidatePath("/students");
+      revalidatePath("/accounts/fees");
+      return { success: true };
+    } catch (err: unknown) {
+      if (isPgUniqueViolation(err)) {
+        return { success: false, errors: { email: ["Email already in use"] } };
+      }
+      return { success: false, errors: { root: ["Something went wrong. Try again."] } };
+    }
   }
-
-  const { name, contactNumber, classId, rollNumber, fee, admissionDate, photoUrl, schoolName } = parsed.data;
-
-  try {
-    const student = await db.query.students.findFirst({
-      where: eq(students.id, studentId),
-    });
-    if (!student) return { success: false, errors: { root: ["Student not found."] } };
-
-    await db.update(users).set({ name, contactNumber }).where(eq(users.id, student.userId));
-    await db
-      .update(students)
-      .set({ classId: Number(classId), rollNumber, fee: fee ? Number(fee) : null, admissionDate, photoUrl: photoUrl || null, schoolName: schoolName || null })
-      .where(eq(students.id, studentId));
-
-    revalidatePath("/students");
-    revalidatePath("/accounts/fees");
-    return { success: true };
-  } catch {
-    return { success: false, errors: { root: ["Something went wrong. Try again."] } };
-  }
-}
 
 // Soft-deactivates or changes student to website/academy student. All their fee records, diary
 // entries, and history are preserved — only the isActive/isAcademyStudent flags change.

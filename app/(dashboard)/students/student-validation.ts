@@ -30,6 +30,8 @@ export type StudentFormValues = z.infer<typeof studentSchema>;
 // Editing a student doesn't allow changing password/email here — keep it
 // scoped to the fields that make sense to update post-creation.
 export const studentUpdateSchema = z.object({
+  email: z.string().email("Enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
   name: z.string().min(2, "Name must be at least 2 characters"),
   contactNumber: z
     .string()

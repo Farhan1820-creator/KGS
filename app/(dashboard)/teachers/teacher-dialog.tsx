@@ -45,7 +45,8 @@ function todayDate(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
 }
 
-const emptyDefaults: TeacherFormValues = {
+const emptyDefaults: TeacherAnyFormValues = {
+  teacherId: "",
   name: "",
   email: "",
   password: "",
@@ -100,7 +101,7 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
     if (teacher) {
       reset({
         name: teacher.name,
-        email: "",
+        email: teacher.email || "",
         password: "",
         contactNumber: teacher.contactNumber ?? "",
         subjectId: teacher.subjectId ? String(teacher.subjectId) : "",
@@ -200,21 +201,16 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                     {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
-                  {mode === "create" && (
-                    <>
-                      <div className="space-y-1">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="teacher@example.com" {...register("email")} />
-                        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" placeholder="Min. 8 characters" {...register("password")} />
-                        {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-                      </div>
-                    </>
-                  )}
+                                      <div className="space-y-1">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" placeholder="teacher@example.com" {...register("email")} />
+                      {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="password">Password</Label>
+                      <Input id="password" type="password" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
+                      {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                    </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="contactNumber">Contact number</Label>
