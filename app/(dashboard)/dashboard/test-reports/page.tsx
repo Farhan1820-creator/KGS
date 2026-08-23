@@ -75,13 +75,6 @@ export default async function TestReportsPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Test Reports</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage and view test marks for students.
-        </p>
-      </div>
-
       <TestReportsClient
         initialMarks={initialMarks}
         classes={allClasses}

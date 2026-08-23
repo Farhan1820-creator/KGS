@@ -67,78 +67,80 @@ export function TestReportsClient({ initialMarks, classes, students, role }: Pro
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-6 flex flex-wrap items-end gap-3 bg-card rounded-xl shadow-md border border-muted/50 p-4">
-        {/* Search */}
-        <div className="space-y-1.5 flex-1 min-w-48">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Search
-          </Label>
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search test or student..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+      <div className="mb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4 bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-3.5 flex-1">
+          {/* Search */}
+          <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-48">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Search
+            </Label>
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search test or student..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 h-10 w-full"
+              />
+            </div>
+          </div>
+          
+          {/* Month */}
+          <div className="space-y-1.5 w-full sm:w-40">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Month
+            </Label>
+            <Input 
+              type="month" 
+              value={filterMonth} 
+              onChange={(e) => setFilterMonth(e.target.value)} 
+              className="w-full h-10"
             />
           </div>
-        </div>
-        
-        {/* Month */}
-        <div className="space-y-1.5 w-full sm:w-auto">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Month
-          </Label>
-          <Input 
-            type="month" 
-            value={filterMonth} 
-            onChange={(e) => setFilterMonth(e.target.value)} 
-            className="w-40"
-          />
+
+          {/* Class */}
+          <div className="space-y-1.5 w-full sm:w-44">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Class
+            </Label>
+            <Select value={filterClass} onValueChange={(v) => { setFilterClass(v || ""); setFilterStudent("all"); }}>
+              <SelectTrigger className="w-full h-10">
+                <SelectValue placeholder="All classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.name} {c.section && ` - ${c.section}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Student */}
+          <div className="space-y-1.5 w-full sm:w-44">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Student
+            </Label>
+            <Select value={filterStudent} onValueChange={(v) => setFilterStudent(v || "")}>
+              <SelectTrigger className="w-full h-10">
+                <SelectValue placeholder="All students" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Students</SelectItem>
+                {studentsInClass.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Class */}
-        <div className="space-y-1.5 w-full sm:w-auto">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Class
-          </Label>
-          <Select value={filterClass} onValueChange={(v) => { setFilterClass(v || ""); setFilterStudent("all"); }}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="All classes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={c.id.toString()}>
-                  Class {c.name} {c.section && ` - ${c.section}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Student */}
-        <div className="space-y-1.5 w-full sm:w-auto">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Student
-          </Label>
-          <Select value={filterStudent} onValueChange={(v) => setFilterStudent(v || "")}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All students" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Students</SelectItem>
-              {studentsInClass.map((s) => (
-                <SelectItem key={s.id} value={String(s.id)}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="self-end ml-auto">
-          <Button onClick={() => setDialogOpen(true)} className="gap-2 shadow-sm">
+        <div className="w-full lg:w-auto shrink-0 flex items-end">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 w-full sm:w-auto shadow-xs h-10">
             <Plus size={16} />
             Add Test Mark
           </Button>
@@ -182,7 +184,7 @@ export function TestReportsClient({ initialMarks, classes, students, role }: Pro
 
                 <div className="mb-2 flex flex-wrap gap-1.5">
                   <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-600">
-                    Class {mark.className}{mark.classSection ? ` – ${mark.classSection}` : ""}
+                    {mark.className}{mark.classSection ? ` – ${mark.classSection}` : ""}
                   </span>
                   <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-600">
                     {mark.month}

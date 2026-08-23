@@ -32,13 +32,14 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
   }
 
   return (
-    <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end flex-1">
+    <div className="bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      {/* Filters Group */}
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-3.5 flex-1">
         {filters.map((f) => {
           const labelText = f.label || f.placeholder;
           return (
-            <div key={f.key} className="space-y-1.5 w-full sm:w-auto">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            <div key={f.key} className="space-y-1.5 w-full sm:w-auto min-w-0">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block truncate">
                 {labelText}
               </Label>
               {f.type === "search" ? (
@@ -69,17 +70,25 @@ export function PageToolbar({ filters, values, onChange, onAdd, addLabel }: Page
             </div>
           );
         })}
+
         {hasActiveFilters && (
-          <div className="self-end pb-0.5">
-            <Button variant="ghost" size="sm" onClick={handleClear} className="w-full sm:w-auto">
-              Clear
+          <div className="w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              size="default"
+              onClick={handleClear}
+              className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground h-10 px-3"
+            >
+              Clear Filters
             </Button>
           </div>
         )}
       </div>
-      <div className="shrink-0 self-end">
-        <Button onClick={onAdd} size="default" className="w-full md:w-auto shadow-sm">
-          <Plus className="h-4 w-4 mr-1" />
+
+      {/* Action Button */}
+      <div className="w-full lg:w-auto shrink-0 flex items-end">
+        <Button onClick={onAdd} size="default" className="w-full sm:w-auto shadow-xs h-10">
+          <Plus className="h-4 w-4 mr-1.5" />
           {addLabel}
         </Button>
       </div>

@@ -296,21 +296,19 @@ export function AttendanceClient({
 
   return (
     <div className="space-y-4">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold">Student Attendance</h2>
-        {role === "admin" && (
+      {role === "admin" && (
+        <div className="flex justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setScheduleDialogOpen(true)}
-            className="self-start sm:self-auto"
+            className="shadow-xs"
           >
             <Settings2 className="h-4 w-4 mr-1.5" />
             Schedule & Holidays
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Schedule & Holidays Information Strip */}
       {(activeSchedule || upcomingVacations.length > 0) && (
@@ -364,10 +362,10 @@ export function AttendanceClient({
         </div>
       )}
 
-      {/* Toolbar & Filters (Matching other pages' PageToolbar) */}
-      <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4 space-y-3">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3">
+      {/* Toolbar & Filters */}
+      <div className="bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-3.5 flex-1">
             {/* Date Picker */}
             <div className="space-y-1.5 w-full sm:w-auto">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
@@ -378,12 +376,13 @@ export function AttendanceClient({
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-40"
+                  className="w-40 h-10"
                 />
                 <Button
                   type="button"
-                  variant={date === getTodayString() ? "secondary" : "ghost"}
-                  size="sm"
+                  variant={date === getTodayString() ? "secondary" : "outline"}
+                  size="default"
+                  className="h-10 px-3 text-xs shadow-2xs"
                   onClick={() => setDate(getTodayString())}
                 >
                   Today
@@ -392,12 +391,12 @@ export function AttendanceClient({
             </div>
 
             {/* Class Selector */}
-            <div className="space-y-1.5 w-full sm:w-auto">
+            <div className="space-y-1.5 w-full sm:w-52">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                 Class
               </Label>
               <Select value={classId} onValueChange={(v) => setClassId(v || "all")}>
-                <SelectTrigger className="w-52">
+                <SelectTrigger className="w-full h-10">
                   <SelectValue placeholder="All Classes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,36 +419,36 @@ export function AttendanceClient({
             </div>
 
             {/* Search Filter */}
-            <div className="space-y-1.5 w-full sm:w-auto">
+            <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-48">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                 Search
               </Label>
               <div className="relative">
                 <Input
-                  placeholder="Search name, roll no, class"
+                  placeholder="Search name, roll no..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-56 pr-7"
+                  className="w-full h-10 pr-7"
                 />
                 {search && (
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Status Filter */}
-            <div className="space-y-1.5 w-full sm:w-auto">
+            <div className="space-y-1.5 w-full sm:w-40">
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
                 Status
               </Label>
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "all")}>
-                <SelectTrigger className="w-36">
+                <SelectTrigger className="w-full h-10">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -465,25 +464,29 @@ export function AttendanceClient({
 
           {/* Quick Mark All Buttons */}
           {students.length > 0 && (
-            <div className="flex items-center gap-2 self-end lg:self-auto">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleMarkAll("present")}
-              >
-                <CheckCheck className="h-4 w-4 mr-1 text-green-600" />
-                All Present
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleMarkAll("absent")}
-              >
-                <XCircle className="h-4 w-4 mr-1 text-red-600" />
-                All Absent
-              </Button>
+            <div className="flex items-end self-stretch lg:self-end">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  className="h-10 text-xs text-emerald-700 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 flex-1 sm:flex-none shadow-2xs"
+                  onClick={() => handleMarkAll("present")}
+                  disabled={isPending}
+                >
+                  Mark All Present
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  className="h-10 text-xs text-red-700 dark:text-red-400 border-red-500/30 hover:bg-red-500/10 flex-1 sm:flex-none shadow-2xs"
+                  onClick={() => handleMarkAll("absent")}
+                  disabled={isPending}
+                >
+                  Mark All Absent
+                </Button>
+              </div>
             </div>
           )}
         </div>

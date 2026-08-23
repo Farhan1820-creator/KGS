@@ -10,7 +10,7 @@ const ROUTE_ROLES: { prefix: string; roles: string[] }[] = [
   { prefix: "/payroll",   roles: ["admin", "teacher", "staff"] },
   { prefix: "/diary",     roles: ["admin", "teacher", "student"] },
   { prefix: "/tasks",     roles: ["admin", "teacher", "student"] },
-  { prefix: "/dashboard/notes", roles: ["admin", "teacher", "staff"] },
+  { prefix: "/dashboard/notes", roles: ["admin", "teacher", "student", "staff"] },
   { prefix: "/dashboard/test-reports", roles: ["admin", "teacher", "student", "staff"] },
   { prefix: "/dashboard", roles: ["admin", "teacher", "student", "staff"] },
 ];
@@ -39,8 +39,8 @@ export default auth((req) => {
   if (isNotesPortal || isOnboarding) {
     if (!isLoggedIn) return NextResponse.redirect(new URL("/login", req.url));
     
-    // Non-students visiting /notes should be redirected to /dashboard/notes (their management portal)
-    if (role !== "student") {
+    // Non-website users (admin, teacher, staff, and academy students) visiting /notes should be redirected to /dashboard/notes
+    if (role !== "student" || studentStatus !== "website") {
       return NextResponse.redirect(new URL("/dashboard/notes", req.url));
     }
     

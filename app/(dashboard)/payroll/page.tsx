@@ -232,7 +232,6 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
 
   return (
     <div className="page-shell space-y-4">
-      <h2 className="text-2xl font-semibold">Payroll</h2>
       <PayrollTabs tab={tab} payrollContent={payrollContent} attendanceContent={attendanceContent} />
     </div>
   );

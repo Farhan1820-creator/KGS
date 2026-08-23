@@ -58,7 +58,7 @@ export default async function OnboardingPage() {
                 >
                   <div className="mb-1 text-2xl">📚</div>
                   <p className="text-sm font-semibold text-gray-800">
-                    Class {cls.name}
+                    {cls.name}
                     {cls.section ? ` – ${cls.section}` : ""}
                   </p>
                   <div className="absolute inset-0 rounded-xl ring-2 ring-transparent transition group-hover:ring-blue-200" />

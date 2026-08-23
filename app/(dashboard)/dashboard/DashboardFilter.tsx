@@ -25,7 +25,7 @@ export function DashboardFilter() {
     <div className="flex items-center gap-3">
       <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Timeframe:</span>
       <Select value={currentFilter} onValueChange={handleFilterChange}>
-        <SelectTrigger className="w-[160px] h-9 bg-card">
+        <SelectTrigger className="w-[170px] h-10 bg-card">
           <SelectValue placeholder="Select period" />
         </SelectTrigger>
         <SelectContent>

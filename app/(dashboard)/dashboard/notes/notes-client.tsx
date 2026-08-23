@@ -64,63 +64,65 @@ export function NotesClient({ initialNotes, classes, subjects, role, userId }: P
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-6 flex flex-wrap items-end gap-3 bg-card rounded-xl shadow-md border border-muted/50 p-4">
-        {/* Search */}
-        <div className="space-y-1.5 flex-1 min-w-48">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Search
-          </Label>
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search notes..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+      <div className="mb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-4 bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-3.5 flex-1">
+          {/* Search */}
+          <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-52">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Search
+            </Label>
+            <div className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search notes by title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 h-10 w-full"
+              />
+            </div>
+          </div>
+
+          {/* Class */}
+          <div className="space-y-1.5 w-full sm:w-48">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Class
+            </Label>
+            <Select value={filterClass} onValueChange={(v) => setFilterClass(v ?? "")}>
+              <SelectTrigger className="w-full h-10">
+                <SelectValue placeholder="All classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.name}{c.section ? ` – ${c.section}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Subject */}
+          <div className="space-y-1.5 w-full sm:w-48">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Subject
+            </Label>
+            <Select value={filterSubject} onValueChange={(v) => setFilterSubject(v ?? "")}>
+              <SelectTrigger className="w-full h-10">
+                <SelectValue placeholder="All subjects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {subjects.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Class */}
-        <div className="space-y-1.5 w-full sm:w-auto">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Class
-          </Label>
-          <Select value={filterClass} onValueChange={(v) => setFilterClass(v ?? "")}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="All classes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classes</SelectItem>
-              {classes.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)}>
-                  Class {c.name}{c.section ? ` – ${c.section}` : ""}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Subject */}
-        <div className="space-y-1.5 w-full sm:w-auto">
-          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
-            Subject
-          </Label>
-          <Select value={filterSubject} onValueChange={(v) => setFilterSubject(v ?? "")}>
-            <SelectTrigger className="w-44">
-              <SelectValue placeholder="All subjects" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Subjects</SelectItem>
-              {subjects.map((s) => (
-                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="self-end ml-auto">
-          <Button onClick={() => setDialogOpen(true)} className="gap-2 shadow-sm">
+        <div className="w-full lg:w-auto shrink-0 flex items-end">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 w-full sm:w-auto shadow-xs h-10">
             <Plus size={16} />
             Upload Note
           </Button>

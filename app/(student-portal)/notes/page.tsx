@@ -6,7 +6,8 @@ import { eq } from "drizzle-orm";
 import { NotesGrid } from "./notes-grid";
 import { signOut } from "@/auth";
 import Image from "next/image";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, LayoutDashboard } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,11 @@ export default async function NotesPortalPage() {
     .from(students)
     .where(eq(students.userId, userId))
     .limit(1);
+
+  // Non-website students (academy students) belong in the dashboard management layout
+  if (student && student.status !== "website") {
+    redirect("/dashboard/notes");
+  }
 
   // No student record at all → send to onboarding
   if (!student) redirect("/onboarding");
@@ -72,7 +78,7 @@ export default async function NotesPortalPage() {
   ).map(([id, name]) => ({ id: id!, name }));
 
   const className = classInfo
-    ? `Class ${classInfo.name}${classInfo.section ? ` – ${classInfo.section}` : ""}`
+    ? `${classInfo.name}${classInfo.section ? ` – ${classInfo.section}` : ""}`
     : "Your Class";
 
   return (
@@ -94,6 +100,15 @@ export default async function NotesPortalPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {student.status !== "website" && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary/90 transition shadow-xs"
+              >
+                <LayoutDashboard size={14} />
+                Dashboard
+              </Link>
+            )}
             <span className="hidden text-sm text-gray-500 sm:block">{session.user.name}</span>
             <form
               action={async () => {

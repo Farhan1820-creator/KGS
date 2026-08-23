@@ -101,9 +101,9 @@ export function GradeSubmissionDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-lg max-h-[90vh] p-4 sm:p-6 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Award className="h-5 w-5 text-amber-500" />
               Review & Grade Submission
             </DialogTitle>
@@ -111,8 +111,8 @@ export function GradeSubmissionDialog({
 
           <div className="space-y-4 pt-1">
             {/* Student Info & Quest */}
-            <div className="rounded-xl border bg-muted/30 p-3.5 space-y-2">
-              <div className="flex items-start justify-between">
+            <div className="rounded-xl border bg-muted/30 p-3 sm:p-3.5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
                 <div>
                   <h4 className="font-semibold text-sm">{submission.studentName}</h4>
                   <p className="text-xs text-muted-foreground">
@@ -128,7 +128,7 @@ export function GradeSubmissionDialog({
                       ? "secondary"
                       : "outline"
                   }
-                  className="capitalize"
+                  className="capitalize shrink-0"
                 >
                   {submission.status}
                 </Badge>
@@ -147,7 +147,7 @@ export function GradeSubmissionDialog({
               </Label>
 
               {submission.submissionText ? (
-                <div className="rounded-lg border bg-background p-3 text-sm whitespace-pre-wrap">
+                <div className="rounded-xl border bg-background p-3 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
                   {submission.submissionText}
                 </div>
               ) : (
@@ -156,9 +156,9 @@ export function GradeSubmissionDialog({
 
               {/* Student Uploaded Image */}
               {submission.submissionImageUrl ? (
-                <div className="space-y-1 pt-1">
-                  <span className="text-xs text-muted-foreground">Attached Homework Proof:</span>
-                  <div className="relative group rounded-lg overflow-hidden border max-w-sm">
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-xs text-muted-foreground font-medium">Attached Homework Proof:</span>
+                  <div className="relative group rounded-xl overflow-hidden border max-w-sm">
                     <img
                       src={submission.submissionImageUrl}
                       alt="Homework Proof"
@@ -181,9 +181,9 @@ export function GradeSubmissionDialog({
 
             {/* Grading Form */}
             <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t">
-              <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
                 <div className="space-y-1.5">
-                  <Label htmlFor="grade-points">Marks / Points Awarded</Label>
+                  <Label htmlFor="grade-points" className="text-xs font-semibold">Marks / Points Awarded</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="grade-points"
@@ -194,20 +194,21 @@ export function GradeSubmissionDialog({
                       placeholder="e.g. 90"
                       value={achievedPoints}
                       onChange={(e) => setAchievedPoints(e.target.value)}
+                      className="h-9 text-xs sm:text-sm"
                       required
                     />
-                    <span className="text-sm text-muted-foreground font-medium">/ {totalPoints}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground font-medium shrink-0">/ {totalPoints}</span>
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded-lg border bg-primary/5 text-center">
+                <div className="p-2 sm:p-2.5 rounded-xl border bg-primary/5 text-center flex flex-row sm:flex-col items-center justify-between sm:justify-center">
                   <p className="text-xs text-muted-foreground">Calculated Score</p>
-                  <p className="text-lg font-bold text-primary">{livePercentage}%</p>
+                  <p className="text-base sm:text-lg font-bold text-primary">{livePercentage}%</p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="grade-feedback">Teacher Feedback / Notes (Optional)</Label>
+                <Label htmlFor="grade-feedback" className="text-xs font-semibold">Teacher Feedback / Notes (Optional)</Label>
                 <Textarea
                   id="grade-feedback"
                   placeholder="e.g. Excellent solution! Great attention to detail."
@@ -217,17 +218,17 @@ export function GradeSubmissionDialog({
                 />
               </div>
 
-              <div className="flex gap-2 pt-2 border-t">
+              <div className="flex flex-col-reverse sm:flex-row gap-2 pt-2 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1"
+                  className="w-full sm:flex-1 h-9"
                   disabled={isSubmitting}
                   onClick={() => onOpenChange(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                <Button type="submit" className="w-full sm:flex-1 font-bold gap-2 h-9" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -249,7 +250,7 @@ export function GradeSubmissionDialog({
       {/* Full Size Image Preview Modal */}
       {previewImage && (
         <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-          <DialogContent className="max-w-3xl p-2 bg-black/90 border-none">
+          <DialogContent className="w-[95vw] max-w-3xl p-2 bg-black/90 border-none">
             <div className="relative flex items-center justify-center p-2">
               <img
                 src={previewImage}

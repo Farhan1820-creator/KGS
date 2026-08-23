@@ -165,23 +165,24 @@ export function CreateTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] p-4 sm:p-6 overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Sparkles className="h-5 w-5 text-primary" />
             Create & Assign New Task
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
           {/* Title */}
           <div className="space-y-1.5">
-            <Label htmlFor="task-title">Task Title *</Label>
+            <Label htmlFor="task-title" className="text-xs font-semibold">Task Title *</Label>
             <Input
               id="task-title"
               placeholder="e.g. Chapter 4 Exercise 4.2 Questions 1 to 5"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              className="h-9 text-xs sm:text-sm"
               required
             />
           </div>
@@ -189,9 +190,9 @@ export function CreateTaskDialog({
           {/* Subject & Class Selectors */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Subject (Optional)</Label>
+              <Label className="text-xs font-semibold">Subject (Optional)</Label>
               <Select value={subjectId} onValueChange={(val) => setSubjectId(val || "all")}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-xs sm:text-sm">
                   <SelectValue placeholder="All / General Subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -206,16 +207,16 @@ export function CreateTaskDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label>Filter by Class</Label>
+              <Label className="text-xs font-semibold">Filter by Class</Label>
               <Select value={selectedClassId} onValueChange={(val) => handleClassChange(val || "all")}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 text-xs sm:text-sm">
                   <SelectValue placeholder="All Classes" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Classes</SelectItem>
                   {classes.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
-                      Class {c.name} {c.section ? `(${c.section})` : ""}
+                      {c.name} {c.section ? `(${c.section})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -226,14 +227,14 @@ export function CreateTaskDialog({
           {/* Student Selector Multi-select with Select All */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>
+              <Label className="text-xs font-semibold">
                 Assign To Students * ({selectedStudentIds.length} selected)
               </Label>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs text-primary"
+                className="h-7 text-xs text-primary px-2"
                 onClick={handleSelectAll}
               >
                 {filteredStudents.every((s) => selectedStudentIds.includes(s.id))
@@ -242,9 +243,9 @@ export function CreateTaskDialog({
               </Button>
             </div>
 
-            <div className="border rounded-lg p-2.5 bg-muted/20 max-h-40 overflow-y-auto space-y-1">
+            <div className="border rounded-xl p-2.5 bg-muted/20 max-h-40 overflow-y-auto space-y-1">
               {filteredStudents.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-2 text-center">No students found.</p>
+                <p className="text-xs text-muted-foreground py-2 text-center">No students found in this class.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {filteredStudents.map((stu) => {
@@ -254,7 +255,7 @@ export function CreateTaskDialog({
                         key={stu.id}
                         type="button"
                         onClick={() => toggleStudent(stu.id)}
-                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors text-left ${
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors text-left ${
                           isSelected
                             ? "bg-primary text-primary-foreground border-primary shadow-xs"
                             : "bg-background text-foreground border-border hover:bg-muted"
@@ -276,7 +277,7 @@ export function CreateTaskDialog({
 
           {/* Description */}
           <div className="space-y-1.5">
-            <Label htmlFor="task-desc">Task Instructions / Description</Label>
+            <Label htmlFor="task-desc" className="text-xs font-semibold">Task Instructions / Description</Label>
             <Textarea
               id="task-desc"
               placeholder="Describe the homework questions, guidelines, or required steps..."
@@ -288,20 +289,20 @@ export function CreateTaskDialog({
 
           {/* Image Attachment Upload */}
           <div className="space-y-1.5">
-            <Label>Attach Question / Homework Image (Optional)</Label>
+            <Label className="text-xs font-semibold">Attach Question / Homework Image (Optional)</Label>
             {imagePreview ? (
-              <div className="relative rounded-lg border p-2 bg-muted/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="relative rounded-xl border p-2 bg-muted/30 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="h-14 w-14 object-cover rounded-md border"
+                    className="h-14 w-14 object-cover rounded-lg border shrink-0"
                   />
-                  <div className="text-xs">
-                    <p className="font-medium truncate max-w-[200px] sm:max-w-xs">
+                  <div className="text-xs min-w-0">
+                    <p className="font-medium truncate">
                       {imageFile?.name}
                     </p>
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-[11px]">
                       {(imageFile?.size ? imageFile.size / 1024 : 0).toFixed(1)} KB
                     </p>
                   </div>
@@ -310,14 +311,14 @@ export function CreateTaskDialog({
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  className="text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:bg-destructive/10 shrink-0"
                   onClick={clearImage}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-4 cursor-pointer hover:bg-muted/40 transition-colors border-muted-foreground/30">
+              <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer hover:bg-muted/40 transition-colors border-muted-foreground/30 text-center">
                 <UploadCloud className="h-6 w-6 text-muted-foreground mb-1" />
                 <span className="text-xs font-medium text-foreground">Click to upload photo / question image</span>
                 <span className="text-[11px] text-muted-foreground mt-0.5">PNG, JPG, JPEG up to 8MB</span>
@@ -345,7 +346,7 @@ export function CreateTaskDialog({
           {/* Points & Due Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="space-y-1.5">
-              <Label htmlFor="task-points">Total Score / Points</Label>
+              <Label htmlFor="task-points" className="text-xs font-semibold">Total Score / Points</Label>
               <Input
                 id="task-points"
                 type="number"
@@ -353,32 +354,34 @@ export function CreateTaskDialog({
                 placeholder="100"
                 value={totalPoints}
                 onChange={(e) => setTotalPoints(e.target.value)}
+                className="h-9 text-xs sm:text-sm"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="task-due">Due Date</Label>
+              <Label htmlFor="task-due" className="text-xs font-semibold">Due Date</Label>
               <Input
                 id="task-due"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                className="h-9 text-xs sm:text-sm"
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2 pt-3 border-t">
+          <div className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="w-full sm:flex-1 h-9"
               disabled={isSubmitting}
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            <Button type="submit" className="w-full sm:flex-1 font-bold gap-2 h-9" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -541,9 +541,9 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
 
       {/* ── Submit / Turn In Quest Modal ─────────────────────────────────── */}
       <Dialog open={submissionModalOpen} onOpenChange={setSubmissionModalOpen}>
-        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-xl max-h-[90vh] p-4 sm:p-6 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Swords className="h-5 w-5 text-primary" />
               Turn In Quest: {selectedQuest?.title}
             </DialogTitle>
@@ -555,15 +555,15 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
                 <CheckCircle2 className="h-10 w-10" />
               </div>
               <h3 className="text-xl font-black text-foreground">Quest Completed!</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Your homework has been submitted to your teacher for grading.
               </p>
             </div>
           ) : (
             <form onSubmit={handleQuestSubmit} className="space-y-4 pt-2">
               {/* Task Details Info Box */}
-              <div className="rounded-xl border bg-muted/30 p-3.5 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
+              <div className="rounded-xl border bg-muted/30 p-3 sm:p-3.5 space-y-2 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <span className="font-semibold text-foreground">
                     Subject: {selectedQuest?.subjectName || "General"}
                   </span>
@@ -572,7 +572,7 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
                   </span>
                 </div>
                 {selectedQuest?.description && (
-                  <p className="text-muted-foreground whitespace-pre-wrap">
+                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
                     {selectedQuest.description}
                   </p>
                 )}
@@ -594,7 +594,7 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
 
               {/* Solution Answer Text */}
               <div className="space-y-1.5">
-                <Label htmlFor="solution-text">Your Solution / Notes</Label>
+                <Label htmlFor="solution-text" className="text-xs font-semibold">Your Solution / Notes</Label>
                 <Textarea
                   id="solution-text"
                   placeholder="Type your answer, solution steps, or summary here..."
@@ -606,20 +606,20 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
 
               {/* Image / Homework Photo Proof */}
               <div className="space-y-1.5">
-                <Label>Attach Homework Photo / Solution Proof</Label>
+                <Label className="text-xs font-semibold">Attach Homework Photo / Solution Proof</Label>
                 {imagePreview ? (
-                  <div className="relative rounded-lg border p-2 bg-muted/30 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                  <div className="relative rounded-lg border p-2 bg-muted/30 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <img
                         src={imagePreview}
                         alt="Proof Preview"
-                        className="h-16 w-16 object-cover rounded-md border"
+                        className="h-14 w-14 sm:h-16 sm:w-16 object-cover rounded-md border shrink-0"
                       />
-                      <div className="text-xs">
-                        <p className="font-medium truncate max-w-[200px] sm:max-w-xs">
+                      <div className="text-xs min-w-0">
+                        <p className="font-medium truncate">
                           {imageFile?.name || "Attached Homework Image"}
                         </p>
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground text-[11px]">
                           {imageFile ? `${(imageFile.size / 1024).toFixed(1)} KB` : "Uploaded"}
                         </p>
                       </div>
@@ -628,15 +628,15 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
                       type="button"
                       size="icon-sm"
                       variant="ghost"
-                      className="text-destructive hover:bg-destructive/10"
+                      className="text-destructive hover:bg-destructive/10 shrink-0"
                       onClick={clearSelectedImage}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-5 cursor-pointer hover:bg-muted/40 transition-colors border-primary/30">
-                    <UploadCloud className="h-7 w-7 text-primary mb-1" />
+                  <label className="flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 sm:p-5 cursor-pointer hover:bg-muted/40 transition-colors border-primary/30 text-center">
+                    <UploadCloud className="h-6 w-6 sm:h-7 sm:w-7 text-primary mb-1" />
                     <span className="text-xs font-semibold text-foreground">Upload Homework Photo</span>
                     <span className="text-[11px] text-muted-foreground mt-0.5">Take a photo of your notebook or upload image</span>
                     <input
@@ -662,17 +662,17 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-3 border-t">
+              <div className="flex flex-col-reverse sm:flex-row gap-2 pt-3 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1"
+                  className="w-full sm:flex-1 h-9"
                   disabled={isSubmitting}
                   onClick={() => setSubmissionModalOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 font-bold gap-2" disabled={isSubmitting}>
+                <Button type="submit" className="w-full sm:flex-1 font-bold gap-2 h-9" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -694,7 +694,7 @@ export function StudentTasksView({ studentName, quests }: StudentTasksViewProps)
       {/* ── Full Image Preview Modal ─────────────────────────────────────── */}
       {imagePreviewModal && (
         <Dialog open={!!imagePreviewModal} onOpenChange={() => setImagePreviewModal(null)}>
-          <DialogContent className="max-w-3xl p-2 bg-black/90 border-none">
+          <DialogContent className="w-[95vw] max-w-3xl p-2 bg-black/90 border-none">
             <div className="relative flex items-center justify-center p-2">
               <img
                 src={imagePreviewModal}

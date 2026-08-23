@@ -164,14 +164,13 @@ export function FeesClient({
 
   return (
     <div className="page-shell space-y-4">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <h2 className="text-2xl font-semibold">Fees Management</h2>
+      {/* Top Action Bar */}
+      <div className="flex justify-end">
         <Button
           variant="outline"
           size="sm"
           onClick={() => setStructureDialogOpen(true)}
-          className="self-start sm:self-auto"
+          className="shadow-xs"
         >
           <Settings2 className="h-4 w-4 mr-1.5" />
           Class Fee Structure
@@ -179,19 +178,19 @@ export function FeesClient({
       </div>
 
       {/* Main Toolbar & Filter Card */}
-      <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4 space-y-4">
+      <div className="bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5 space-y-4">
         {/* Month Generation Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-muted/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-muted/50">
           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
-            <span className="text-xs font-medium text-muted-foreground">Generate Monthly Fees:</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Generate Monthly Fees:</span>
             <div className="flex items-center gap-2">
               <Input
                 type="month"
                 value={generateMonth}
                 onChange={(e) => setGenerateMonth(e.target.value)}
-                className="w-40"
+                className="w-40 h-10"
               />
-              <Button onClick={handleGenerate} disabled={isPending} size="sm">
+              <Button onClick={handleGenerate} disabled={isPending} size="default" className="h-10 shadow-xs">
                 <Sparkles className="h-4 w-4 mr-1.5" />
                 Generate Fees
               </Button>
@@ -203,7 +202,7 @@ export function FeesClient({
         </div>
 
         {/* Filters Controls Row */}
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-3 sm:gap-3.5">
           {/* Month Range Filter */}
           <div className="space-y-1.5 w-full sm:w-auto">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
@@ -214,27 +213,27 @@ export function FeesClient({
                 type="month"
                 value={from}
                 onChange={(e) => handleFromChange(e.target.value)}
-                className="w-36"
+                className="w-36 h-10"
                 title="From month"
               />
-              <span className="text-xs text-muted-foreground font-medium">to</span>
+              <span className="text-xs text-muted-foreground font-medium px-0.5">to</span>
               <Input
                 type="month"
                 value={to}
                 onChange={(e) => handleToChange(e.target.value)}
-                className="w-36"
+                className="w-36 h-10"
                 title="To month"
               />
             </div>
           </div>
 
           {/* Class Filter */}
-          <div className="space-y-1.5 w-full sm:w-auto">
+          <div className="space-y-1.5 w-full sm:w-44">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Class
             </Label>
             <Select value={classId ?? "all"} onValueChange={(v: string | null) => handleClassChange(v ?? "all")}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-full h-10">
                 <SelectValue placeholder="All classes" />
               </SelectTrigger>
               <SelectContent>
@@ -249,12 +248,12 @@ export function FeesClient({
           </div>
 
           {/* Student Filter */}
-          <div className="space-y-1.5 w-full sm:w-auto">
+          <div className="space-y-1.5 w-full sm:w-48">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Student
             </Label>
             <Select value={studentId ?? "all"} onValueChange={(v: string | null) => handleStudentChange(v ?? "all")}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full h-10">
                 <SelectValue placeholder="All students" />
               </SelectTrigger>
               <SelectContent>
@@ -269,12 +268,12 @@ export function FeesClient({
           </div>
 
           {/* Status Filter (Paid / Unpaid) */}
-          <div className="space-y-1.5 w-full sm:w-auto">
+          <div className="space-y-1.5 w-full sm:w-36">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Status
             </Label>
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "all")}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-full h-10">
                 <SelectValue placeholder="All status" />
               </SelectTrigger>
               <SelectContent>
@@ -286,7 +285,7 @@ export function FeesClient({
           </div>
 
           {/* Search Box */}
-          <div className="space-y-1.5 w-full sm:w-auto">
+          <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-48">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Search
             </Label>
@@ -295,25 +294,30 @@ export function FeesClient({
                 placeholder="Search name or roll no..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-52 pr-7"
+                className="w-full h-10 pr-7"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Clear Filters */}
+          {/* Clear Filters Button */}
           {hasActiveFilters && (
-            <div className="self-end pb-0.5">
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear
+            <div className="w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                size="default"
+                onClick={clearFilters}
+                className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground h-10 px-3"
+              >
+                Clear Filters
               </Button>
             </div>
           )}

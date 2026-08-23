@@ -3,6 +3,8 @@ import Image from "next/image";
 const footerLinks = [
   { label: "Courses", href: "#courses" },
   { label: "About", href: "#about" },
+  { label: "Notes", href: "/notes" },
+  { label: "Student Portal", href: "/login" },
   { label: "Contact", href: "#contact" },
   { label: "Instagram", href: "https://instagram.com" },
 ];

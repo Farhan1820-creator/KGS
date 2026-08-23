@@ -69,7 +69,7 @@ export async function uploadNote(data: UploadNoteData): Promise<{ success: boole
   
   if (studentsInClass.length > 0) {
     const userIds = studentsInClass.map(s => s.userId).filter(Boolean) as number[];
-    await sendNotificationToMultiple(userIds, "New Note Added", `A new note "${data.title}" has been added.`, "/notes");
+    await sendNotificationToMultiple(userIds, "New Note Added", `A new note "${data.title}" has been added.`, "/dashboard/notes");
   }
 
 

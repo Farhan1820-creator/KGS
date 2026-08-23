@@ -160,83 +160,79 @@ export function TeacherTasksView({
 
   return (
     <div className="page-shell space-y-5">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tasks & Homework</h2>
-          <p className="text-sm text-muted-foreground">
-            Create, assign, and grade homework and interactive student tasks.
-          </p>
-        </div>
-        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2 self-start sm:self-auto">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-end">
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2 shadow-xs">
           <Plus className="h-4 w-4" />
           Create New Task
         </Button>
       </div>
 
       {/* Summary Stats Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-xl border bg-card p-3.5 shadow-xs">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
-            <ListTodo className="h-4 w-4 text-primary" />
-            Total Tasks
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+        <div className="rounded-xl border bg-card p-3 sm:p-4 shadow-2xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium truncate">
+            <ListTodo className="h-4 w-4 text-primary shrink-0" />
+            <span>Total Tasks</span>
           </div>
-          <p className="text-2xl font-bold mt-1 text-foreground">{totalTasksCount}</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1 text-foreground">{totalTasksCount}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-3.5 shadow-xs">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
-            <Users className="h-4 w-4 text-blue-500" />
-            Total Assigned
+        <div className="rounded-xl border bg-card p-3 sm:p-4 shadow-2xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium truncate">
+            <Users className="h-4 w-4 text-blue-500 shrink-0" />
+            <span>Total Assigned</span>
           </div>
-          <p className="text-2xl font-bold mt-1 text-foreground">{totalAssignmentsCount}</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1 text-foreground">{totalAssignmentsCount}</p>
         </div>
 
-        <div className="rounded-xl border bg-card p-3.5 shadow-xs">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
-            <Clock className="h-4 w-4 text-amber-500" />
-            Pending Review
+        <div className="rounded-xl border bg-card p-3 sm:p-4 shadow-2xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium truncate">
+            <Clock className="h-4 w-4 text-amber-500 shrink-0" />
+            <span>Pending Review</span>
           </div>
-          <p className="text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">
+          <p className="text-xl sm:text-2xl font-bold mt-1 text-amber-600 dark:text-amber-400">
             {totalSubmittedCount}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-card p-3.5 shadow-xs">
-          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            Graded Submissions
+        <div className="rounded-xl border bg-card p-3 sm:p-4 shadow-2xs">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium truncate">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <span>Graded Tasks</span>
           </div>
-          <p className="text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
+          <p className="text-xl sm:text-2xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
             {totalGradedCount}
           </p>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1.5 w-full sm:w-auto flex-1 min-w-[200px]">
+      <div className="bg-card rounded-2xl shadow-sm border border-muted/50 p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3 sm:gap-3.5">
+          {/* Search Task */}
+          <div className="space-y-1.5 w-full sm:flex-1 sm:min-w-64">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Search Task
             </Label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by title, subject or description..."
-                className="pl-9"
+                className="pl-10 h-10 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="space-y-1.5 w-full sm:w-auto min-w-[160px]">
+          {/* Subject */}
+          <div className="space-y-1.5 w-full sm:w-48">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Subject
             </Label>
             <Select value={filterSubject} onValueChange={(val) => setFilterSubject(val || "all")}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full h-10">
                 <SelectValue placeholder="All Subjects" />
               </SelectTrigger>
               <SelectContent>
@@ -250,48 +246,52 @@ export function TeacherTasksView({
             </Select>
           </div>
 
-          <div className="space-y-1.5 w-full sm:w-auto min-w-[160px]">
+          {/* Class */}
+          <div className="space-y-1.5 w-full sm:w-48">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
               Class
             </Label>
             <Select value={filterClass} onValueChange={(val) => setFilterClass(val || "all")}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full h-10">
                 <SelectValue placeholder="All Classes" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Classes</SelectItem>
                 {classes.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
-                    Class {c.name} {c.section ? `(${c.section})` : ""}
+                    {c.name} {c.section ? `(${c.section})` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Reset Filters */}
           {(searchQuery || filterSubject !== "all" || filterClass !== "all") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="self-end text-xs text-muted-foreground"
-              onClick={() => {
-                setSearchQuery("");
-                setFilterSubject("all");
-                setFilterClass("all");
-              }}
-            >
-              Reset Filters
-            </Button>
+            <div className="w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                size="default"
+                className="w-full sm:w-auto text-xs text-muted-foreground hover:text-foreground h-10 px-3"
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilterSubject("all");
+                  setFilterClass("all");
+                }}
+              >
+                Reset Filters
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
       {/* Task Cards List */}
       {filteredTasks.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-12 text-center bg-card">
+        <div className="rounded-xl border border-dashed p-8 sm:p-12 text-center bg-card">
           <ListTodo className="h-10 w-10 text-muted-foreground/50 mx-auto mb-3" />
           <h3 className="font-semibold text-base">No tasks found</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 mb-4">
             {initialTasks.length === 0
               ? "Start by creating and assigning your first task to students."
               : "No tasks match your current filters."}
@@ -302,7 +302,7 @@ export function TeacherTasksView({
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredTasks.map((task) => {
             const pendingCount = task.assignments.filter((a) => a.status === "pending").length;
             const submittedCount = task.assignments.filter((a) => a.status === "submitted").length;
@@ -312,7 +312,7 @@ export function TeacherTasksView({
             return (
               <div
                 key={task.id}
-                className="rounded-xl border bg-card p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between space-y-3"
+                className="rounded-2xl border bg-card p-4 sm:p-4.5 shadow-2xs hover:shadow-md transition-shadow flex flex-col justify-between space-y-3"
               >
                 <div>
                   {/* Card Header: Subject, Class & Actions */}
@@ -329,7 +329,7 @@ export function TeacherTasksView({
                       )}
                       {task.className && (
                         <Badge variant="outline" className="text-xs">
-                          Class {task.className}
+                          {task.className}
                         </Badge>
                       )}
                       <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-800/50">
@@ -340,7 +340,7 @@ export function TeacherTasksView({
                     <Button
                       size="icon-sm"
                       variant="ghost"
-                      className="text-destructive hover:bg-destructive/10 h-7 w-7"
+                      className="text-destructive hover:bg-destructive/10 h-7 w-7 shrink-0"
                       onClick={() => handleDeleteTask(task.id)}
                       disabled={isPending}
                     >
@@ -349,7 +349,7 @@ export function TeacherTasksView({
                   </div>
 
                   {/* Task Title & Description */}
-                  <h3 className="font-semibold text-base mt-2 text-foreground line-clamp-1">
+                  <h3 className="font-semibold text-sm sm:text-base mt-2 text-foreground line-clamp-1">
                     {task.title}
                   </h3>
                   {task.description && (
@@ -360,21 +360,21 @@ export function TeacherTasksView({
 
                   {/* Attachment indicator if image exists */}
                   {task.imageUrl && (
-                    <div className="mt-2.5 flex items-center gap-1.5 text-xs text-primary">
-                      <ImageIcon className="h-3.5 w-3.5" />
-                      <span>Has Question Attachment Image</span>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-primary">
+                      <ImageIcon className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">Question Image Attached</span>
                     </div>
                   )}
                 </div>
 
                 {/* Submissions Progress & Due Date */}
-                <div className="space-y-2.5 pt-2 border-t text-xs">
-                  <div className="flex items-center justify-between text-muted-foreground">
+                <div className="space-y-2.5 pt-2.5 border-t text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
+                      <Calendar className="h-3.5 w-3.5 shrink-0" />
                       <span>{task.dueDate ? `Due: ${task.dueDate}` : "No due date"}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] sm:text-xs">
                       <span className="text-amber-600 dark:text-amber-400 font-medium">
                         {submittedCount} Submitted
                       </span>
@@ -388,12 +388,12 @@ export function TeacherTasksView({
                   {/* Submissions Progress Bar */}
                   <div className="w-full bg-muted h-2 rounded-full overflow-hidden flex">
                     <div
-                      className="bg-emerald-500 h-full"
+                      className="bg-emerald-500 h-full transition-all"
                       style={{ width: `${totalAssigned ? (gradedCount / totalAssigned) * 100 : 0}%` }}
                       title={`${gradedCount} Graded`}
                     />
                     <div
-                      className="bg-amber-400 h-full"
+                      className="bg-amber-400 h-full transition-all"
                       style={{ width: `${totalAssigned ? (submittedCount / totalAssigned) * 100 : 0}%` }}
                       title={`${submittedCount} Submitted (Needs Review)`}
                     />
@@ -403,10 +403,10 @@ export function TeacherTasksView({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full justify-between mt-1 text-xs font-medium"
+                    className="w-full justify-between mt-1 text-xs font-medium h-8.5"
                     onClick={() => setActiveSubmissionsTask(task)}
                   >
-                    <span>View Submissions ({totalAssigned} Students)</span>
+                    <span>View Submissions ({totalAssigned})</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -419,10 +419,10 @@ export function TeacherTasksView({
       {/* Task Submissions Sheet / Dialog */}
       {activeSubmissionsTask && (
         <Dialog open={!!activeSubmissionsTask} onOpenChange={() => setActiveSubmissionsTask(null)}>
-          <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] p-4 sm:p-6 overflow-y-auto">
             <DialogHeader>
               <div className="pr-6">
-                <DialogTitle className="text-base font-bold">
+                <DialogTitle className="text-base sm:text-lg font-bold">
                   {activeSubmissionsTask.title} — Submissions
                 </DialogTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -432,21 +432,21 @@ export function TeacherTasksView({
               </div>
             </DialogHeader>
 
-            <div className="space-y-2 mt-2">
+            <div className="space-y-2 mt-3">
               {activeSubmissionsTask.assignments.map((assignment) => {
                 return (
                   <div
                     key={assignment.id}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors text-sm"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors text-sm"
                   >
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">{assignment.studentName}</span>
                         {assignment.rollNumber && (
                           <span className="text-xs text-muted-foreground">({assignment.rollNumber})</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <Badge
                           variant={
                             assignment.status === "graded"
@@ -461,7 +461,7 @@ export function TeacherTasksView({
                         </Badge>
                         {assignment.submittedAt && (
                           <span>
-                            Submitted: {new Date(assignment.submittedAt).toLocaleDateString("en-CA")}
+                            {new Date(assignment.submittedAt).toLocaleDateString("en-CA")}
                           </span>
                         )}
                         {assignment.status === "graded" && (
@@ -472,14 +472,14 @@ export function TeacherTasksView({
                       </div>
                     </div>
 
-                    <div>
+                    <div className="self-end sm:self-auto w-full sm:w-auto">
                       {assignment.status === "pending" ? (
-                        <span className="text-xs text-muted-foreground italic mr-2">Not submitted</span>
+                        <span className="text-xs text-muted-foreground italic">Not submitted</span>
                       ) : (
                         <Button
                           size="sm"
                           variant={assignment.status === "submitted" ? "default" : "outline"}
-                          className="text-xs h-8 gap-1.5"
+                          className="text-xs h-8 gap-1.5 w-full sm:w-auto"
                           onClick={() => handleOpenGrading(activeSubmissionsTask, assignment)}
                         >
                           <Award className="h-3.5 w-3.5" />

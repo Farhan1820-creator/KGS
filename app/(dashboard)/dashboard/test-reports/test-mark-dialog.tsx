@@ -90,7 +90,7 @@ export function TestMarkDialog({ open, onOpenChange, onSaved, classes, students 
               <SelectContent>
                 {classes.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
-                    Class {c.name}{c.section ? ` – ${c.section}` : ""}
+                    {c.name}{c.section ? ` – ${c.section}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
