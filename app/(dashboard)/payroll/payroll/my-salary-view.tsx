@@ -62,8 +62,8 @@ export function MySalaryView({ month, salary }: MySalaryViewProps) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Your basic salary is split evenly across this month's working days, then each day is paid in proportion
-        to the time you actually worked vs. your required shift length. Approved leave days are paid in full.
+        Your basic salary is calculated on a per-day basis across the month&apos;s scheduled working days.
+        Each day worked or on approved leave adds your daily rate; absent days are not paid.
       </p>
     </div>
   );

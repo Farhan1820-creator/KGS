@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CalendarCheck } from "lucide-react";
 
 export type StudentRow = {
   id: number;
@@ -26,10 +27,11 @@ export type StudentRow = {
 
 interface StudentColumnsOptions {
   onViewFeeDetails: (row: StudentRow) => void;
+  onViewAttendance: (row: StudentRow) => void;
   onUpdateStatus: (row: StudentRow, status: "Active" | "Website" | "Inactive") => void;
 }
 
-export function getStudentColumns({ onViewFeeDetails, onUpdateStatus }: StudentColumnsOptions): ColumnDef<StudentRow>[] {
+export function getStudentColumns({ onViewFeeDetails, onViewAttendance, onUpdateStatus }: StudentColumnsOptions): ColumnDef<StudentRow>[] {
   return [
     {
       id: "photo",
@@ -54,6 +56,24 @@ export function getStudentColumns({ onViewFeeDetails, onUpdateStatus }: StudentC
     { accessorKey: "className", header: "Class" },
     { accessorKey: "rollNumber", header: "Roll No." },
     { accessorKey: "admissionDate", header: "Admission Date", cell: ({ row }) => row.original.admissionDate ?? "—" },
+    {
+      id: "attendance",
+      header: "Attendance",
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2.5 text-xs gap-1.5 font-medium border-primary/30 text-primary hover:bg-primary hover:text-white transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewAttendance(row.original);
+          }}
+        >
+          <CalendarCheck className="h-3.5 w-3.5" />
+          View Attendance
+        </Button>
+      ),
+    },
     {
       accessorKey: "feeStatus",
       header: "Fee Status",

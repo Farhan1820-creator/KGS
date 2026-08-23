@@ -20,14 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Check, X } from "lucide-react";
 import type { TeacherRow } from "./teacher-columns";
 
 type DialogMode = "view" | "edit" | "create";
@@ -51,7 +45,7 @@ const emptyDefaults: TeacherAnyFormValues = {
   email: "",
   password: "",
   contactNumber: "",
-  subjectId: "",
+  subjectIds: [],
   joinDate: todayDate(),
 };
 
@@ -79,7 +73,6 @@ function initialsOf(name: string): string {
 export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, mode: initialMode = "view" }: TeacherDialogProps) {
   const isCreate = !teacher;
   const [mode, setMode] = useState<DialogMode>(isCreate ? "create" : initialMode);
-  const isFormMode = mode !== "view";
   const [idPreview, setIdPreview] = useState<string | null>(null);
 
   const {
@@ -123,8 +116,7 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
         email: teacher.email || "",
         password: "",
         contactNumber: teacher.contactNumber ?? "",
-        subjectId: teacher.subjectId ? String(teacher.subjectId) : "",
-        // carried through to updateTeacher via the update schema's teacherId field
+        subjectIds: teacher.subjectIds ?? [],
         teacherId: teacher.teacherId ?? "",
         joinDate: teacher.joinDate ?? todayDate(),
       });
@@ -179,7 +171,7 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
             </DialogTitle>
             {mode === "view" && (
               <Button type="button" size="sm" variant="outline" onClick={() => setMode("edit")}>
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-3.5 w-3.5 mr-1" />
                 Edit
               </Button>
             )}
@@ -205,7 +197,20 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                 <Field label="Teacher ID" value={teacher.teacherId ?? ""} />
                 <Field label="Email" value={teacher.email} />
                 <Field label="Contact Number" value={teacher.contactNumber ?? ""} />
-                <Field label="Subject" value={teacher.subjectName ?? ""} />
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-muted-foreground">Assigned Subject(s)</p>
+                  {teacher.subjectNames && teacher.subjectNames.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {teacher.subjectNames.map((name) => (
+                        <Badge key={name} variant="secondary" className="font-normal text-xs py-0.5 px-2">
+                          {name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium text-muted-foreground">—</p>
+                  )}
+                </div>
                 <Field label="Join Date" value={teacher.joinDate ?? ""} />
               </div>
             ) : (
@@ -221,32 +226,40 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                     {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
-                                                          <div className="space-y-1">
-                      <Label htmlFor="email">Email</Label>
-                      {mode === "create" ? (
-                        <div className="flex items-center h-10">
-                          <Input 
-                            id="email"
-                            type="text"
-                            className="rounded-r-none h-full"
-                            placeholder="teacher"
-                            value={(watch("email") || "").replace("@teacher.learnex", "")}
-                            onChange={(e) => setValue("email", e.target.value + "@teacher.learnex", { shouldValidate: true })}
-                          />
-                          <span className="inline-flex items-center justify-center rounded-r-md border border-l-0 bg-muted px-3 text-sm text-muted-foreground h-full whitespace-nowrap">
-                            @teacher.learnex
-                          </span>
-                        </div>
-                      ) : (
-                        <Input id="email" type="email" autoComplete="off" data-lpignore="true" placeholder="teacher@example.com" {...register("email")} />
-                      )}
-                      {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" autoComplete="new-password" data-lpignore="true" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
-                      {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
-                    </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="email">Email</Label>
+                    {mode === "create" ? (
+                      <div className="flex items-center h-10">
+                        <Input
+                          id="email"
+                          type="text"
+                          className="rounded-r-none h-full"
+                          placeholder="teacher"
+                          value={(watch("email") || "").replace("@teacher.learnex", "")}
+                          onChange={(e) => setValue("email", e.target.value + "@teacher.learnex", { shouldValidate: true })}
+                        />
+                        <span className="inline-flex items-center justify-center rounded-r-md border border-l-0 bg-muted px-3 text-sm text-muted-foreground h-full whitespace-nowrap">
+                          @teacher.learnex
+                        </span>
+                      </div>
+                    ) : (
+                      <Input id="email" type="email" autoComplete="off" data-lpignore="true" placeholder="teacher@example.com" {...register("email")} />
+                    )}
+                    {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"}
+                      {...register("password")}
+                    />
+                    {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                  </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="contactNumber">Contact number</Label>
@@ -255,57 +268,107 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                   </div>
 
                   <div className="space-y-1">
-                    <Label>Subject</Label>
-                    <Controller
-                      control={control}
-                      name="subjectId"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select subject" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((s) => (
-                              <SelectItem key={s.id} value={String(s.id)}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId.message}</p>}
-                  </div>
-
-                  <div className="space-y-1">
                     <Label htmlFor="joinDate">Join date</Label>
                     <Input id="joinDate" type="date" {...register("joinDate")} />
                     {errors.joinDate && <p className="text-sm text-red-500">{errors.joinDate.message}</p>}
                   </div>
 
+                  {/* Multi-select Subject Field (Optional) */}
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>Assigned Subject(s) <span className="text-muted-foreground text-xs font-normal">(Optional)</span></Label>
+                    <Controller
+                      control={control}
+                      name="subjectIds"
+                      render={({ field }) => {
+                        const selectedIds: number[] = Array.isArray(field.value) ? field.value : [];
+                        const toggleSubject = (id: number) => {
+                          if (selectedIds.includes(id)) {
+                            field.onChange(selectedIds.filter((x) => x !== id));
+                          } else {
+                            field.onChange([...selectedIds, id]);
+                          }
+                        };
+
+                        return (
+                          <div className="space-y-2">
+                            {/* Selected Chips */}
+                            <div className="flex flex-wrap gap-1.5 p-2 rounded-md border min-h-[42px] bg-background items-center">
+                              {selectedIds.length === 0 ? (
+                                <span className="text-xs text-muted-foreground">No subjects selected (Optional)</span>
+                              ) : (
+                                selectedIds.map((sId) => {
+                                  const sub = subjects.find((s) => s.id === sId);
+                                  if (!sub) return null;
+                                  return (
+                                    <Badge
+                                      key={sub.id}
+                                      variant="secondary"
+                                      className="gap-1 pl-2.5 pr-1 py-1 text-xs font-medium"
+                                    >
+                                      {sub.name}
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleSubject(sub.id)}
+                                        className="rounded-full hover:bg-muted p-0.5"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    </Badge>
+                                  );
+                                })
+                              )}
+                            </div>
+
+                            {/* Options Grid */}
+                            <div className="border rounded-lg p-2.5 bg-muted/20 max-h-36 overflow-y-auto space-y-1">
+                              <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">Click to add/remove subjects:</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                                {subjects.map((sub) => {
+                                  const isChecked = selectedIds.includes(sub.id);
+                                  return (
+                                    <button
+                                      key={sub.id}
+                                      type="button"
+                                      onClick={() => toggleSubject(sub.id)}
+                                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors text-left ${
+                                        isChecked
+                                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                          : "bg-background text-foreground border-border hover:bg-muted"
+                                      }`}
+                                    >
+                                      <span className="truncate">{sub.name}</span>
+                                      {isChecked && <Check className="h-3.5 w-3.5 ml-1 shrink-0" />}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  </div>
+
                   {mode === "edit" ? (
-                    <div className="space-y-1">
+                    <div className="space-y-1 sm:col-span-2">
                       <Label htmlFor="teacherId">Teacher ID</Label>
                       <Input id="teacherId" placeholder="e.g. 2026-TCH-007" {...register("teacherId")} />
                       {errors.teacherId && <p className="text-sm text-red-500">{errors.teacherId.message}</p>}
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-1 sm:col-span-2">
                       <Label>Teacher ID</Label>
                       <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 text-sm text-muted-foreground">
                         {idPreview ?? "Generating..."}
                       </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Teacher ID is auto-assigned when created — not editable here.
+                      </p>
                     </div>
-                  )}
-
-                  {mode === "create" && (
-                    <p className="text-xs text-muted-foreground sm:col-span-2 sm:-mt-2">
-                      Teacher ID is auto-assigned when the teacher is created — not editable here.
-                    </p>
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2 pt-2">
                   {mode === "edit" && (
                     <Button type="button" variant="outline" className="flex-1" onClick={() => setMode("view")}>
                       Cancel

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -18,7 +19,7 @@ import { FeeStructureDialog } from "./fee-structure-dialog";
 import { FeeDetailDialog } from "./fee-detail-dialog";
 import { generateFeesForMonth, markFeePaid, markFeeUnpaid, updateFeeAmount } from "./fee-actions";
 import { currentMonth } from "./fee-range";
-import { Settings2, Sparkles } from "lucide-react";
+import { Settings2, Sparkles, X } from "lucide-react";
 
 interface FeesClientProps {
   initialData: FeeRow[];
@@ -46,6 +47,7 @@ export function FeesClient({
   const [detailRow, setDetailRow] = useState<FeeRow | null>(null);
   const [generateMonth, setGenerateMonth] = useState(currentMonth());
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isPending, startTransition] = useTransition();
 
   function updateParams(patch: Record<string, string | undefined>) {
@@ -81,23 +83,34 @@ export function FeesClient({
   }
 
   function clearFilters() {
+    setSearch("");
+    setStatusFilter("all");
     router.push(`/accounts/fees?from=${currentMonth()}&to=${currentMonth()}`);
   }
 
   const filteredData = useMemo(() => {
-    if (!search.trim()) return initialData;
-    const q = search.trim().toLowerCase();
-    return initialData.filter(
-      (row) => row.studentName.toLowerCase().includes(q) || (row.rollNumber ?? "").toLowerCase().includes(q)
-    );
-  }, [initialData, search]);
+    return initialData.filter((row) => {
+      // Status filter
+      if (statusFilter !== "all" && row.status !== statusFilter) return false;
+
+      // Search query
+      if (!search.trim()) return true;
+      const q = search.trim().toLowerCase();
+      return (
+        row.studentName.toLowerCase().includes(q) ||
+        (row.rollNumber ?? "").toLowerCase().includes(q) ||
+        (row.className ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [initialData, search, statusFilter]);
 
   const totals = useMemo(() => {
     const totalAmount = filteredData.reduce((sum, f) => sum + f.amount, 0);
     const paidAmount = filteredData.filter((f) => f.status === "paid").reduce((sum, f) => sum + f.amount, 0);
     const unpaidAmount = totalAmount - paidAmount;
     const paidCount = filteredData.filter((f) => f.status === "paid").length;
-    return { totalAmount, paidAmount, unpaidAmount, paidCount, total: filteredData.length };
+    const unpaidCount = filteredData.filter((f) => f.status === "unpaid").length;
+    return { totalAmount, paidAmount, unpaidAmount, paidCount, unpaidCount, total: filteredData.length };
   }, [filteredData]);
 
   function handleGenerate() {
@@ -126,7 +139,6 @@ export function FeesClient({
 
   const columns = getFeeColumns({ onTogglePaid: handleTogglePaid });
 
-
   function handleUpdateAmount(row: FeeRow, newAmount: number) {
     startTransition(async () => {
       const result = await updateFeeAmount(row.id, newAmount);
@@ -142,115 +154,204 @@ export function FeesClient({
     });
   }
 
+  const hasActiveFilters =
+    Boolean(search) ||
+    statusFilter !== "all" ||
+    Boolean(classId) ||
+    Boolean(studentId) ||
+    from !== currentMonth() ||
+    to !== currentMonth();
+
   return (
     <div className="page-shell space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            type="month"
-            value={generateMonth}
-            onChange={(e) => setGenerateMonth(e.target.value)}
-            className="w-full sm:w-44"
-          />
-          <Button onClick={handleGenerate} disabled={isPending} size="sm">
-            <Sparkles className="h-4 w-4 mr-1" />
-            Generate Fees
-          </Button>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => setStructureDialogOpen(true)}>
-          <Settings2 className="h-4 w-4 mr-1" />
-          Set Class Fee
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h2 className="text-2xl font-semibold">Fees Management</h2>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setStructureDialogOpen(true)}
+          className="self-start sm:self-auto"
+        >
+          <Settings2 className="h-4 w-4 mr-1.5" />
+          Class Fee Structure
         </Button>
       </div>
 
-      {/* Filters header */}
-      <div className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:flex sm:flex-wrap sm:items-center">
-        <div className="flex w-full items-center gap-2 sm:w-auto">
-          <Input
-            type="month"
-            value={from}
-            onChange={(e) => handleFromChange(e.target.value)}
-            className="w-full sm:w-40"
-            title="From month"
-          />
-          <span className="text-sm text-muted-foreground">to</span>
-          <Input
-            type="month"
-            value={to}
-            onChange={(e) => handleToChange(e.target.value)}
-            className="w-full sm:w-40"
-            title="To month"
-          />
+      {/* Main Toolbar & Filter Card */}
+      <div className="bg-card rounded-xl shadow-md border border-muted/50 p-4 space-y-4">
+        {/* Month Generation Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-muted/50">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <span className="text-xs font-medium text-muted-foreground">Generate Monthly Fees:</span>
+            <div className="flex items-center gap-2">
+              <Input
+                type="month"
+                value={generateMonth}
+                onChange={(e) => setGenerateMonth(e.target.value)}
+                className="w-40"
+              />
+              <Button onClick={handleGenerate} disabled={isPending} size="sm">
+                <Sparkles className="h-4 w-4 mr-1.5" />
+                Generate Fees
+              </Button>
+            </div>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Creates monthly fee invoices for all currently active students.
+          </span>
         </div>
 
-        <Select value={classId ?? "all"} onValueChange={(v:string | null) => handleClassChange(v ?? "all")}>
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder="All classes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All classes</SelectItem>
-            {classes.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                {c.name} {c.section ?? ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Filters Controls Row */}
+        <div className="flex flex-wrap items-end gap-3">
+          {/* Month Range Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Month Range
+            </Label>
+            <div className="flex items-center gap-1.5">
+              <Input
+                type="month"
+                value={from}
+                onChange={(e) => handleFromChange(e.target.value)}
+                className="w-36"
+                title="From month"
+              />
+              <span className="text-xs text-muted-foreground font-medium">to</span>
+              <Input
+                type="month"
+                value={to}
+                onChange={(e) => handleToChange(e.target.value)}
+                className="w-36"
+                title="To month"
+              />
+            </div>
+          </div>
 
-        <Select value={studentId ?? "all"} onValueChange={(v:string | null) => handleStudentChange(v ?? "all")}>
-          <SelectTrigger className="w-full sm:w-52">
-            <SelectValue placeholder="All students" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All students</SelectItem>
-            {students.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Class Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Class
+            </Label>
+            <Select value={classId ?? "all"} onValueChange={(v: string | null) => handleClassChange(v ?? "all")}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="All classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All classes</SelectItem>
+                {classes.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {c.name} {c.section ?? ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Input
-          placeholder="Search by name or roll number"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-56"
-        />
+          {/* Student Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Student
+            </Label>
+            <Select value={studentId ?? "all"} onValueChange={(v: string | null) => handleStudentChange(v ?? "all")}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All students" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All students</SelectItem>
+                {students.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Button variant="ghost" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
-          Clear
-        </Button>
+          {/* Status Filter (Paid / Unpaid) */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Status
+            </Label>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v || "all")}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="All status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All status</SelectItem>
+                <SelectItem value="paid">Paid only</SelectItem>
+                <SelectItem value="unpaid">Unpaid only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Search Box */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Search
+            </Label>
+            <div className="relative">
+              <Input
+                placeholder="Search name or roll no..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-52 pr-7"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <div className="self-end pb-0.5">
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Clear
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Summary Stats Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-muted/50 text-sm">
+          <div className="rounded-lg border border-muted/50 bg-background/50 p-2.5 flex flex-col justify-between">
+            <span className="text-xs text-muted-foreground font-medium">Total Invoices</span>
+            <span className="text-lg font-bold mt-0.5">{totals.total}</span>
+          </div>
+          <div className="rounded-lg border border-muted/50 bg-background/50 p-2.5 flex flex-col justify-between">
+            <span className="text-xs text-muted-foreground font-medium">Total Amount</span>
+            <span className="text-lg font-bold mt-0.5">Rs. {totals.totalAmount.toLocaleString()}</span>
+          </div>
+          <div className="rounded-lg border border-muted/50 bg-background/50 p-2.5 flex flex-col justify-between">
+            <span className="text-xs text-green-600 font-medium">Collected ({totals.paidCount})</span>
+            <span className="text-lg font-bold text-green-600 mt-0.5">Rs. {totals.paidAmount.toLocaleString()}</span>
+          </div>
+          <div className="rounded-lg border border-muted/50 bg-background/50 p-2.5 flex flex-col justify-between">
+            <span className="text-xs text-red-600 font-medium">Pending ({totals.unpaidCount})</span>
+            <span className="text-lg font-bold text-red-600 mt-0.5">Rs. {totals.unpaidAmount.toLocaleString()}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Total Records</p>
-          <p className="text-lg font-semibold">{totals.total}</p>
-        </div>
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Total Amount</p>
-          <p className="text-lg font-semibold">Rs. {totals.totalAmount.toLocaleString()}</p>
-        </div>
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Collected ({totals.paidCount})</p>
-          <p className="text-lg font-semibold text-green-600">Rs. {totals.paidAmount.toLocaleString()}</p>
-        </div>
-        <div className="rounded-lg border p-3">
-          <p className="text-xs text-muted-foreground">Pending</p>
-          <p className="text-lg font-semibold text-destructive">Rs. {totals.unpaidAmount.toLocaleString()}</p>
-        </div>
-      </div>
-
+      {/* Main Data Table */}
       <DataTable columns={columns} data={filteredData} onRowClick={(row) => setDetailRow(row)} />
 
-            <FeeDetailDialog
+      {/* Fee Detail Modal */}
+      <FeeDetailDialog
         fee={detailRow}
         onOpenChange={(open) => !open && setDetailRow(null)}
         onTogglePaid={handleTogglePaid}
         onUpdateAmount={handleUpdateAmount}
       />
 
+      {/* Fee Structure Modal */}
       <FeeStructureDialog
         open={structureDialogOpen}
         onOpenChange={setStructureDialogOpen}

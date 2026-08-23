@@ -26,17 +26,20 @@ export function DiaryClassSelector({ classes, selectedClassId }: DiaryClassSelec
   }
 
   return (
-    <Select value={selectedClassId} onValueChange={handleChange}>
-      <SelectTrigger className="w-48">
-        <SelectValue placeholder="Select class" />
-      </SelectTrigger>
-      <SelectContent>
-        {classes.map((c) => (
-          <SelectItem key={c.id} value={String(c.id)}>
-            {c.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Class:</span>
+      <Select value={selectedClassId} onValueChange={handleChange}>
+        <SelectTrigger className="w-48">
+          <SelectValue placeholder="Select class" />
+        </SelectTrigger>
+        <SelectContent>
+          {classes.map((c) => (
+            <SelectItem key={c.id} value={String(c.id)}>
+              {c.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

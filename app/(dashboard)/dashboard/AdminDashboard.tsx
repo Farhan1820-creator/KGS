@@ -7,6 +7,7 @@ import { FeesTrendChart, ExpenseCategoryChart, NetCashFlowChart } from "./dashbo
 import { SchoolInfoCard } from "./school-info-card";
 import { DashboardFilter } from "./DashboardFilter";
 import { MonthlyGoal } from "./MonthlyGoal";
+import { StatsContainer } from "./StatsContainer";
 import { GraduationCap, Users, Wallet, Receipt, TrendingUp, TrendingDown } from "lucide-react";
 
 type AdminDashboardProps = {
@@ -153,7 +154,8 @@ export default async function AdminDashboard({ name, searchParams }: AdminDashbo
         <DashboardFilter />
       </div>
 
-      {/* Stat cards */}
+      <StatsContainer>
+        {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <StatCard label="Students" value={String(studentCount)} icon={GraduationCap} gradient="from-indigo-600 to-blue-700" />
         <StatCard label="Teachers" value={String(teacherCount)} icon={Users} gradient="from-purple-600 to-indigo-700" />
@@ -174,6 +176,8 @@ export default async function AdminDashboard({ name, searchParams }: AdminDashbo
           <MonthlyGoal current={collectedThisMonth} target={500000 * targetMonths.length} label={periodLabel} />
         </div>
       </div>
+
+            </StatsContainer>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

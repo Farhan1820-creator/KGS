@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { subjects } from "@/db/schema";
 import { TeachersClient } from "./teachers-client";
 
 export const dynamic = "force-dynamic";
@@ -13,22 +12,41 @@ export default async function TeachersPage() {
 
   const [teacherRows, subjectList] = await Promise.all([
     db.query.teachers.findMany({
-      with: { user: true, subject: true },
+      with: {
+        user: true,
+        subject: true,
+        teacherSubjects: {
+          with: { subject: true },
+        },
+      },
+      orderBy: (t, { desc }) => [desc(t.id)],
     }),
-    db.query.subjects.findMany(),
+    db.query.subjects.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
   ]);
 
-  const data = teacherRows.map((t) => ({
-    id: t.id,
-    name: t.user.name,
-    email: t.user.email,
-    contactNumber: t.user.contactNumber,
-    subjectId: t.subjectId,
-    subjectName: t.subject?.name ?? "—",
-    teacherId: t.teacherId,
-    joinDate: t.joinDate,
-    isActive: t.user.isActive,
-  }));
+  const data = teacherRows.map((t) => {
+    const assignedSubjects = t.teacherSubjects && t.teacherSubjects.length > 0
+      ? t.teacherSubjects.map((ts) => ({ id: ts.subjectId, name: ts.subject.name }))
+      : t.subject
+      ? [{ id: t.subject.id, name: t.subject.name }]
+      : [];
+
+    const subjectNames = assignedSubjects.map((s) => s.name);
+    const subjectIds = assignedSubjects.map((s) => s.id);
+
+    return {
+      id: t.id,
+      name: t.user.name,
+      email: t.user.email,
+      contactNumber: t.user.contactNumber,
+      subjectIds,
+      subjectNames,
+      subjectName: subjectNames.length > 0 ? subjectNames.join(", ") : "—",
+      teacherId: t.teacherId,
+      joinDate: t.joinDate,
+      isActive: t.user.isActive,
+    };
+  });
 
   return <TeachersClient initialData={data} subjects={subjectList} />;
 }

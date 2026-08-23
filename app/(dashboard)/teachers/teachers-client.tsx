@@ -25,13 +25,14 @@ export function TeachersClient({ initialData, subjects }: TeachersClientProps) {
   const [showInactive, setShowInactive] = useState(false);
 
   const filterConfig: FilterConfig[] = [
-    { type: "search", key: "name", placeholder: "Search by name" },
-    { type: "search", key: "teacherId", placeholder: "Search by teacher ID" },
-    { type: "search", key: "contactNumber", placeholder: "Search by contact" },
+    { type: "search", key: "name", placeholder: "Search by name", label: "Teacher Name" },
+    { type: "search", key: "teacherId", placeholder: "Search by teacher ID", label: "Teacher ID" },
+    { type: "search", key: "contactNumber", placeholder: "Search by contact", label: "Contact Number" },
     {
       type: "select",
       key: "subjectName",
       placeholder: "Filter by subject",
+      label: "Subject",
       options: subjects.map((s) => ({ label: s.name, value: s.name })),
     },
   ];
@@ -42,6 +43,12 @@ export function TeachersClient({ initialData, subjects }: TeachersClientProps) {
       .filter((row) =>
         Object.entries(filters).every(([key, value]) => {
           if (!value) return true;
+          if (key === "subjectName") {
+            return (
+              row.subjectNames?.some((s) => s.toLowerCase().includes(value.toLowerCase())) ||
+              (row.subjectName ?? "").toLowerCase().includes(value.toLowerCase())
+            );
+          }
           const cell = String(row[key as keyof TeacherRow] ?? "").toLowerCase();
           return cell.includes(value.toLowerCase());
         })

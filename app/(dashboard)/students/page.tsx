@@ -17,9 +17,10 @@ export default async function StudentsPage() {
   // one query with relations instead of separate user/class round-trips (see db/queries/students.ts)
   const [studentRows, classList, allFees, structures] = await Promise.all([
     db.query.students.findMany({
-      with: { user: true, class: true },
-    }),
-    db.query.classes.findMany(),
+        with: { user: true, class: true },
+        orderBy: (t, { desc }) => [desc(t.id)]
+      }),
+    db.query.classes.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
     // fetch every fee record (not just this month) — overall status needs the
     // full paid/unpaid history from each student's admission date onward
     db.query.fees.findMany({ columns: { studentId: true, month: true, status: true } }),

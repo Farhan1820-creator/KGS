@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Search, Filter, Trash2, FileSpreadsheet, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
@@ -66,57 +67,82 @@ export function TestReportsClient({ initialMarks, classes, students, role }: Pro
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search test or student..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <div className="mb-6 flex flex-wrap items-end gap-3 bg-card rounded-xl shadow-md border border-muted/50 p-4">
+        {/* Search */}
+        <div className="space-y-1.5 flex-1 min-w-48">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Search
+          </Label>
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search test or student..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
         
-        <Input 
-          type="month" 
-          value={filterMonth} 
-          onChange={(e) => setFilterMonth(e.target.value)} 
-          className="w-40"
-        />
+        {/* Month */}
+        <div className="space-y-1.5 w-full sm:w-auto">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Month
+          </Label>
+          <Input 
+            type="month" 
+            value={filterMonth} 
+            onChange={(e) => setFilterMonth(e.target.value)} 
+            className="w-40"
+          />
+        </div>
 
-        <Select value={filterClass} onValueChange={(v) => { setFilterClass(v || ""); setFilterStudent("all"); }}>
-          <SelectTrigger className="w-32">
-            <Filter size={14} className="mr-1 text-muted-foreground" />
-            <SelectValue placeholder="All classes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Classes</SelectItem>
-            {classes.map((c) => (
-              <SelectItem key={c.id} value={c.id.toString()}>
-                Class {c.name} {c.section && ` - ${c.section}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Class */}
+        <div className="space-y-1.5 w-full sm:w-auto">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Class
+          </Label>
+          <Select value={filterClass} onValueChange={(v) => { setFilterClass(v || ""); setFilterStudent("all"); }}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="All classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map((c) => (
+                <SelectItem key={c.id} value={c.id.toString()}>
+                  Class {c.name} {c.section && ` - ${c.section}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Select value={filterStudent} onValueChange={(v) => setFilterStudent(v || "")}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All students" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Students</SelectItem>
-            {studentsInClass.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
-                {s.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Student */}
+        <div className="space-y-1.5 w-full sm:w-auto">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Student
+          </Label>
+          <Select value={filterStudent} onValueChange={(v) => setFilterStudent(v || "")}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All students" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Students</SelectItem>
+              {studentsInClass.map((s) => (
+                <SelectItem key={s.id} value={String(s.id)}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <Button onClick={() => setDialogOpen(true)} className="gap-2 ml-auto">
-          <Plus size={16} />
-          Add Test Mark
-        </Button>
+        <div className="self-end ml-auto">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 shadow-sm">
+            <Plus size={16} />
+            Add Test Mark
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

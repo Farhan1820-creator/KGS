@@ -7,6 +7,7 @@ import { PageToolbar, FilterConfig } from "@/components/layout/page-toolbar";
 import { DataTable } from "@/components/layout/data-table";
 import { getStudentColumns, StudentRow } from "./student-columns";
 import { StudentDialog } from "./student-dialog";
+import { StudentAttendanceDialog } from "./student-attendance-dialog";
 import { updateStudentStatus } from "./student-actions";
 
 interface StudentsClientProps {
@@ -22,18 +23,23 @@ export function StudentsClient({ initialData, classes, feeStructures, currentMon
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"view" | "edit">("view");
   const [dialogTarget, setDialogTarget] = useState<StudentRow | null>(null);
+
+  const [attendanceDialogOpen, setAttendanceDialogOpen] = useState(false);
+  const [attendanceTargetStudent, setAttendanceTargetStudent] = useState<StudentRow | null>(null);
+
   const [filters, setFilters] = useState<Record<string, string>>({});
   // Toggles for different statuses
   const [showInactive, setShowInactive] = useState(false);
   const [showWebsite, setShowWebsite] = useState(false);
 
   const filterConfig: FilterConfig[] = [
-    { type: "search", key: "name", placeholder: "Search by name" },
-    { type: "search", key: "contactNumber", placeholder: "Search by contact" },
+    { type: "search", key: "name", placeholder: "Search by name", label: "Student Name" },
+    { type: "search", key: "contactNumber", placeholder: "Search by contact", label: "Contact Number" },
     {
       type: "select",
       key: "className",
       placeholder: "Filter by class",
+      label: "Class",
       options: classes.map((c) => ({ label: c.name, value: c.name })),
     },
   ];
@@ -70,6 +76,11 @@ export function StudentsClient({ initialData, classes, feeStructures, currentMon
     router.push(`/accounts/fees?${params.toString()}`);
   }
 
+  function handleViewAttendance(row: StudentRow) {
+    setAttendanceTargetStudent(row);
+    setAttendanceDialogOpen(true);
+  }
+
   function handleUpdateStatus(row: StudentRow, status: "Active" | "Website" | "Inactive") {
     startTransition(async () => {
       const result = await updateStudentStatus(row.id, status);
@@ -84,6 +95,7 @@ export function StudentsClient({ initialData, classes, feeStructures, currentMon
 
   const columns = getStudentColumns({
     onViewFeeDetails: handleViewFeeDetails,
+    onViewAttendance: handleViewAttendance,
     onUpdateStatus: handleUpdateStatus,
   });
 
@@ -131,6 +143,13 @@ export function StudentsClient({ initialData, classes, feeStructures, currentMon
         student={dialogTarget}
         mode={dialogMode}
         onSaved={() => router.refresh()}
+      />
+
+      <StudentAttendanceDialog
+        open={attendanceDialogOpen}
+        onOpenChange={setAttendanceDialogOpen}
+        studentId={attendanceTargetStudent?.id ?? null}
+        studentName={attendanceTargetStudent?.name}
       />
     </div>
   );

@@ -20,6 +20,7 @@ import {
   Wallet,
   Receipt,
   FileText,
+  ListTodo,
 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 
@@ -33,6 +34,7 @@ type LinkItem = {
 
 const links: LinkItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: BlocksIcon, roles: ["admin", "teacher", "student", "staff"] },
+  { href: "/tasks", label: "Tasks", icon: ListTodo, roles: ["admin", "teacher", "student"] },
   { 
     href: "/students", 
     label: "Students", 

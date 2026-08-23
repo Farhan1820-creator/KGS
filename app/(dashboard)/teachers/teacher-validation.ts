@@ -9,7 +9,7 @@ export const teacherSchema = z.object({
   contactNumber: z
     .string()
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
-  subjectId: z.string().min(1, "Select a subject"),
+  subjectIds: z.array(z.coerce.number()).default([]),
   joinDate: z.string().regex(dateRegex, "Select a valid date"),
 });
 
@@ -24,7 +24,7 @@ export const teacherUpdateSchema = z.object({
   contactNumber: z
     .string()
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
-  subjectId: z.string().min(1, "Select a subject"),
+  subjectIds: z.array(z.coerce.number()).default([]),
   teacherId: z.string().min(1, "Teacher ID is required"),
   joinDate: z.string().regex(dateRegex, "Select a valid date"),
 });

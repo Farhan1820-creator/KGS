@@ -27,13 +27,13 @@ export function SettingsClient({ subjects, classes }: SettingsClientProps) {
   const [, startTransition] = useTransition();
 
   const subjectFilterConfig: FilterConfig[] = [
-    { type: "search", key: "name", placeholder: "Search by name" },
-    { type: "search", key: "code", placeholder: "Search by code" },
+    { type: "search", key: "name", placeholder: "Search by name", label: "Subject Name" },
+    { type: "search", key: "code", placeholder: "Search by code", label: "Subject Code" },
   ];
 
   const classFilterConfig: FilterConfig[] = [
-    { type: "search", key: "name", placeholder: "Search by name" },
-    { type: "search", key: "section", placeholder: "Search by section" },
+    { type: "search", key: "name", placeholder: "Search by name", label: "Class Name" },
+    { type: "search", key: "section", placeholder: "Search by section", label: "Section" },
   ];
 
   const filteredSubjects = useMemo(

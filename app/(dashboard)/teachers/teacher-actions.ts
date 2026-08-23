@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db";
-import { users, teachers } from "@/db/schema";
+import { users, teachers, teacherSubjects } from "@/db/schema";
 import { eq, like } from "drizzle-orm";
 import { teacherSchema, teacherUpdateSchema } from "./teacher-validation";
 import { hash } from "bcryptjs";
@@ -35,7 +35,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, contactNumber, subjectId, joinDate } = parsed.data;
+  const { name, email, password, contactNumber, subjectIds = [], joinDate } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -58,13 +58,26 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
           const seq = nextSequenceNumber(existing.map((t) => t.teacherId), year, "TCH");
           return formatSequentialCode(year, "TCH", seq);
         },
-        (teacherId) =>
-          db.insert(teachers).values({
-            userId: user.id,
-            subjectId: Number(subjectId),
-            teacherId,
-            joinDate,
-          })
+        async (teacherId) => {
+          const [newTeacher] = await db
+            .insert(teachers)
+            .values({
+              userId: user.id,
+              subjectId: subjectIds[0] ?? null,
+              teacherId,
+              joinDate,
+            })
+            .returning({ id: teachers.id });
+
+          if (subjectIds.length > 0) {
+            await db.insert(teacherSubjects).values(
+              subjectIds.map((sId) => ({
+                teacherId: newTeacher.id,
+                subjectId: sId,
+              }))
+            );
+          }
+        }
       );
     } catch (innerErr) {
       await db.delete(users).where(eq(users.id, user.id));
@@ -82,7 +95,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
   }
 }
 
-// Updates a teacher's editable fields — name, contact, subject, and teacher ID.
+// Updates a teacher's editable fields — name, contact, subjects, and teacher ID.
 // Email/password are left alone here.
 export async function updateTeacher(teacherId: number, formData: unknown): Promise<TeacherUpdateActionResult> {
   const parsed = teacherUpdateSchema.safeParse(formData);
@@ -90,7 +103,7 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, contactNumber, subjectId, teacherId: teacherCode, joinDate } = parsed.data;
+  const { name, contactNumber, subjectIds = [], teacherId: teacherCode, joinDate } = parsed.data;
 
   try {
     const teacher = await db.query.teachers.findFirst({
@@ -104,8 +117,19 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
     await db.update(users).set({ name, contactNumber }).where(eq(users.id, teacher.userId));
     await db
       .update(teachers)
-      .set({ subjectId: Number(subjectId), teacherId: teacherCode, joinDate })
+      .set({ subjectId: subjectIds[0] ?? null, teacherId: teacherCode, joinDate })
       .where(eq(teachers.id, teacherId));
+
+    // Update teacher_subjects table
+    await db.delete(teacherSubjects).where(eq(teacherSubjects.teacherId, teacherId));
+    if (subjectIds.length > 0) {
+      await db.insert(teacherSubjects).values(
+        subjectIds.map((sId) => ({
+          teacherId,
+          subjectId: sId,
+        }))
+      );
+    }
 
     revalidatePath("/teachers");
     return { success: true };

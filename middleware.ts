@@ -9,6 +9,7 @@ const ROUTE_ROLES: { prefix: string; roles: string[] }[] = [
   { prefix: "/settings",  roles: ["admin"] },
   { prefix: "/payroll",   roles: ["admin", "teacher", "staff"] },
   { prefix: "/diary",     roles: ["admin", "teacher", "student"] },
+  { prefix: "/tasks",     roles: ["admin", "teacher", "student"] },
   { prefix: "/dashboard/notes", roles: ["admin", "teacher", "staff"] },
   { prefix: "/dashboard/test-reports", roles: ["admin", "teacher", "student", "staff"] },
   { prefix: "/dashboard", roles: ["admin", "teacher", "student", "staff"] },
@@ -61,7 +62,8 @@ export default auth((req) => {
     pathname.startsWith("/accounts") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/payroll") ||
-    pathname.startsWith("/diary");
+    pathname.startsWith("/diary") ||
+    pathname.startsWith("/tasks");
 
   if (!isLoggedIn && !isLoginPage && isDashboardRoute) {
     return NextResponse.redirect(new URL("/login", req.url));
@@ -93,6 +95,8 @@ export const config = {
     "/settings/:path*",
     "/payroll/:path*",
     "/diary/:path*",
+    "/tasks/:path*",
+    "/tasks",
     "/login", 
     "/notes", 
     "/onboarding"

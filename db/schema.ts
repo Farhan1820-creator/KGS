@@ -50,10 +50,23 @@ export const students = pgTable("students", {
 export const teachers = pgTable("teachers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  subjectId: integer("subject_id").references(() => subjects.id),
+  subjectId: integer("subject_id").references(() => subjects.id), // legacy single subject column
   teacherId: varchar("teacher_id", { length: 20 }).unique(), // system-generated, e.g. "2026-TCH-007"
   joinDate: date("join_date"), // "YYYY-MM-DD"
 });
+
+// Many-to-many join table for multiple subjects per teacher
+export const teacherSubjects = pgTable(
+  "teacher_subjects",
+  {
+    id: serial("id").primaryKey(),
+    teacherId: integer("teacher_id").notNull().references(() => teachers.id, { onDelete: "cascade" }),
+    subjectId: integer("subject_id").notNull().references(() => subjects.id, { onDelete: "cascade" }),
+  },
+  (table) => ({
+    teacherSubjectUnique: unique().on(table.teacherId, table.subjectId),
+  })
+);
 
 export const diaryEntries = pgTable("diary_entries", {
   id: serial("id").primaryKey(),
@@ -156,15 +169,20 @@ export const classesRelations = relations(classes, ({ many }) => ({
 
 export const subjectsRelations = relations(subjects, ({ many }) => ({
   teachers: many(teachers),
+  teacherSubjects: many(teacherSubjects),
   notes: many(notes),
 }));
 
-
-
-export const teachersRelations = relations(teachers, ({ one }) => ({
+export const teachersRelations = relations(teachers, ({ one, many }) => ({
   user: one(users, { fields: [teachers.userId], references: [users.id] }),
   subject: one(subjects, { fields: [teachers.subjectId], references: [subjects.id] }),
+  teacherSubjects: many(teacherSubjects),
   employee: one(employees, { fields: [teachers.id], references: [employees.teacherId] }),
+}));
+
+export const teacherSubjectsRelations = relations(teacherSubjects, ({ one }) => ({
+  teacher: one(teachers, { fields: [teacherSubjects.teacherId], references: [teachers.id] }),
+  subject: one(subjects, { fields: [teacherSubjects.subjectId], references: [subjects.id] }),
 }));
 
 // ---- Expenses ----------------------------------------------------------
@@ -422,4 +440,58 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 
 export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
   user: one(users, { fields: [pushSubscriptions.userId], references: [users.id] }),
+}));
+
+// ---- Tasks / Quests --------------------------------------------------------
+
+export const taskStatusEnum = pgEnum("task_status", ["pending", "submitted", "graded"]);
+
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  teacherId: integer("teacher_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subjectId: integer("subject_id").references(() => subjects.id, { onDelete: "set null" }),
+  classId: integer("class_id").references(() => classes.id, { onDelete: "set null" }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url", { length: 500 }),
+  dueDate: date("due_date"), // "YYYY-MM-DD"
+  totalPoints: integer("total_points").notNull().default(100),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const taskAssignments = pgTable(
+  "task_assignments",
+  {
+    id: serial("id").primaryKey(),
+    taskId: integer("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+    studentId: integer("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+    status: taskStatusEnum("status").notNull().default("pending"),
+    submissionText: text("submission_text"),
+    submissionImageUrl: varchar("submission_image_url", { length: 500 }),
+    submittedAt: timestamp("submitted_at"),
+    achievedPoints: integer("achieved_points"),
+    percentage: numeric("percentage", { precision: 5, scale: 2 }),
+    feedback: text("feedback"),
+    gradedBy: integer("graded_by").references(() => users.id, { onDelete: "set null" }),
+    gradedAt: timestamp("graded_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    taskStudentUnique: unique().on(table.taskId, table.studentId),
+  })
+);
+
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
+  teacher: one(users, { fields: [tasks.teacherId], references: [users.id] }),
+  subject: one(subjects, { fields: [tasks.subjectId], references: [subjects.id] }),
+  class: one(classes, { fields: [tasks.classId], references: [classes.id] }),
+  assignments: many(taskAssignments),
+}));
+
+export const taskAssignmentsRelations = relations(taskAssignments, ({ one }) => ({
+  task: one(tasks, { fields: [taskAssignments.taskId], references: [tasks.id] }),
+  student: one(students, { fields: [taskAssignments.studentId], references: [students.id] }),
+  grader: one(users, { fields: [taskAssignments.gradedBy], references: [users.id] }),
 }));

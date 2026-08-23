@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { FileText, Image, FileSpreadsheet, Presentation, File, Trash2, Plus, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function fileIcon(fileType: string) {
@@ -63,45 +64,67 @@ export function NotesClient({ initialNotes, classes, subjects, role, userId }: P
   return (
     <div>
       {/* Toolbar */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search notes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      <div className="mb-6 flex flex-wrap items-end gap-3 bg-card rounded-xl shadow-md border border-muted/50 p-4">
+        {/* Search */}
+        <div className="space-y-1.5 flex-1 min-w-48">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Search
+          </Label>
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search notes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
-        <Select value={filterClass} onValueChange={(v) => setFilterClass(v ?? "")}>
-          <SelectTrigger className="w-40">
-            <Filter size={14} className="mr-1 text-muted-foreground" />
-            <SelectValue placeholder="All classes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Classes</SelectItem>
-            {classes.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                Class {c.name}{c.section ? ` – ${c.section}` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterSubject} onValueChange={(v) => setFilterSubject(v ?? "")}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="All subjects" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Subjects</SelectItem>
-            {subjects.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2 ml-auto">
-          <Plus size={16} />
-          Upload Note
-        </Button>
+
+        {/* Class */}
+        <div className="space-y-1.5 w-full sm:w-auto">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Class
+          </Label>
+          <Select value={filterClass} onValueChange={(v) => setFilterClass(v ?? "")}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="All classes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classes</SelectItem>
+              {classes.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  Class {c.name}{c.section ? ` – ${c.section}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Subject */}
+        <div className="space-y-1.5 w-full sm:w-auto">
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+            Subject
+          </Label>
+          <Select value={filterSubject} onValueChange={(v) => setFilterSubject(v ?? "")}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="All subjects" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Subjects</SelectItem>
+              {subjects.map((s) => (
+                <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="self-end ml-auto">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 shadow-sm">
+            <Plus size={16} />
+            Upload Note
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

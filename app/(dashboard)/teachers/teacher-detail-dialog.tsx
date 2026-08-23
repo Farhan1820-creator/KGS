@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import type { TeacherRow } from "./teacher-columns";
 
 interface TeacherDetailDialogProps {
@@ -33,7 +34,20 @@ export function TeacherDetailDialog({ open, onOpenChange, teacher }: TeacherDeta
           <Field label="Teacher ID" value={teacher.teacherId ?? ""} />
           <Field label="Email" value={teacher.email} />
           <Field label="Contact Number" value={teacher.contactNumber ?? ""} />
-          <Field label="Subject" value={teacher.subjectName ?? ""} />
+          <div className="col-span-2">
+            <p className="text-xs text-muted-foreground">Assigned Subject(s)</p>
+            {teacher.subjectNames && teacher.subjectNames.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {teacher.subjectNames.map((name) => (
+                  <Badge key={name} variant="secondary" className="font-normal text-xs py-0.5 px-2">
+                    {name}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="font-medium text-muted-foreground">—</p>
+            )}
+          </div>
           <Field label="Join Date" value={teacher.joinDate ?? ""} />
         </div>
       </DialogContent>

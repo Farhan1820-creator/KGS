@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -86,45 +87,67 @@ export function AdminAttendanceView({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Input type="month" value={selectedMonth} onChange={(e) => applyMonth(e.target.value)} className="w-44" />
-            <Button variant="ghost" size="sm" onClick={resetToThisMonth}>
-              This Month
-            </Button>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          {/* Month Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Month
+            </Label>
+            <div className="flex items-center gap-1.5">
+              <Input type="month" value={selectedMonth} onChange={(e) => applyMonth(e.target.value)} className="w-40" />
+              <Button variant="ghost" size="sm" onClick={resetToThisMonth}>
+                This Month
+              </Button>
+            </div>
           </div>
-          <Select value={employeeFilter} onValueChange={(v: string | null) => setEmployeeFilter(v ?? "all")}>
-            <SelectTrigger className="w-52">
-              <SelectValue placeholder="All employees" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All employees</SelectItem>
-              {employeeOptions.map((e) => (
-                <SelectItem key={e.id} value={String(e.id)}>
-                  {e.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={(v: string | null) => setStatusFilter(v ?? "all")}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              {(Object.keys(STATUS_LABELS) as AttendanceStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_LABELS[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+          {/* Employee Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Employee
+            </Label>
+            <Select value={employeeFilter} onValueChange={(v: string | null) => setEmployeeFilter(v ?? "all")}>
+              <SelectTrigger className="w-52">
+                <SelectValue placeholder="All employees" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All employees</SelectItem>
+                {employeeOptions.map((e) => (
+                  <SelectItem key={e.id} value={String(e.id)}>
+                    {e.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="space-y-1.5 w-full sm:w-auto">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Status
+            </Label>
+            <Select value={statusFilter} onValueChange={(v: string | null) => setStatusFilter(v ?? "all")}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {(Object.keys(STATUS_LABELS) as AttendanceStatus[]).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STATUS_LABELS[s]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
-          <Settings2 className="h-4 w-4 mr-1" />
-          Schedule & Holidays
-        </Button>
+        <div className="self-end">
+          <Button variant="outline" size="sm" onClick={() => setScheduleDialogOpen(true)}>
+            <Settings2 className="h-4 w-4 mr-1.5" />
+            Schedule & Holidays
+          </Button>
+        </div>
       </div>
 
       {(activeSchedule || upcomingVacations.length > 0) && (

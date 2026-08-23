@@ -9,6 +9,7 @@ export type FeeRow = {
   id: number;
   studentId: number;
   studentName: string;
+  photoUrl?: string | null;
   rollNumber: string | null;
   classId: number | null;
   className: string | null;
@@ -24,6 +25,23 @@ interface FeeColumnsOptions {
 
 export function getFeeColumns({ onTogglePaid }: FeeColumnsOptions): ColumnDef<FeeRow>[] {
   return [
+    {
+      id: "photo",
+      header: "",
+      cell: ({ row }) =>
+        row.original.photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={row.original.photoUrl}
+            alt={row.original.studentName}
+            className="h-8 w-8 rounded-full object-cover border"
+          />
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground border">
+            {row.original.studentName ? row.original.studentName.slice(0, 1).toUpperCase() : "?"}
+          </div>
+        ),
+    },
     { accessorKey: "studentName", header: "Student" },
     { accessorKey: "rollNumber", header: "Roll No." },
     { accessorKey: "className", header: "Class" },

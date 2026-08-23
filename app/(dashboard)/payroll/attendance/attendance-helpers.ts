@@ -54,6 +54,17 @@ export function datesInMonth(month: string): string[] {
   return dates;
 }
 
+// All calendar dates (1..daysInMonth) in the given "YYYY-MM" month
+export function allDatesInMonth(month: string): string[] {
+  const [year, monthNum] = month.split("-").map(Number);
+  const daysInMonth = new Date(year, monthNum, 0).getDate();
+  const dates: string[] = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    dates.push(`${year}-${String(monthNum).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
+  }
+  return dates;
+}
+
 export function dayOfWeek(date: string): number {
   const [y, m, d] = date.split("-").map(Number);
   return new Date(y, m - 1, d).getDay(); // 0=Sunday..6=Saturday
@@ -87,14 +98,30 @@ export type WorkSchedule = {
 // was live back then, so historical salary/attendance stays accurate even
 // though today's admin only ever sees one "Active" schedule.
 export function getActiveSchedule(date: string, schedules: WorkSchedule[]): WorkSchedule | null {
-  const applicable = schedules.filter((s): s is WorkSchedule & { effectiveFrom: string } => s.effectiveFrom !== null && s.effectiveFrom <= date);
-  if (applicable.length === 0) return null;
-  return applicable.reduce((latest, s) => {
-    if (s.effectiveFrom !== latest.effectiveFrom) return s.effectiveFrom > latest.effectiveFrom ? s : latest;
-    const sTime = s.appliedAt ? new Date(s.appliedAt).getTime() : 0;
-    const latestTime = latest.appliedAt ? new Date(latest.appliedAt).getTime() : 0;
-    return sTime > latestTime ? s : latest;
-  });
+  if (!schedules || schedules.length === 0) return null;
+
+  const applicable = schedules.filter(
+    (s): s is WorkSchedule & { effectiveFrom: string } => s.effectiveFrom !== null && s.effectiveFrom <= date
+  );
+
+  if (applicable.length > 0) {
+    return applicable.reduce((latest, s) => {
+      if (s.effectiveFrom !== latest.effectiveFrom) return s.effectiveFrom > latest.effectiveFrom ? s : latest;
+      const sTime = s.appliedAt ? new Date(s.appliedAt).getTime() : 0;
+      const latestTime = latest.appliedAt ? new Date(latest.appliedAt).getTime() : 0;
+      return sTime > latestTime ? s : latest;
+    });
+  }
+
+  // Fallback for past dates before the first schedule's effectiveFrom date:
+  // Use the active schedule or the first schedule with configured days so past weekdays are recognized.
+  const currentActive = schedules.find((s) => s.isActive);
+  if (currentActive) return currentActive;
+
+  const withDays = schedules.filter((s) => s.days && s.days.length > 0);
+  if (withDays.length > 0) return withDays[0];
+
+  return schedules[0] ?? null;
 }
 
 // Returns this date's start/end timing, or null if it's a non-working day —
@@ -106,7 +133,14 @@ export function getActiveSchedule(date: string, schedules: WorkSchedule[]): Work
 export function getDaySchedule(date: string, schedules: WorkSchedule[], offDates: string[] = []): DaySchedule | null {
   if (offDates.includes(date)) return null;
   const active = getActiveSchedule(date, schedules);
-  if (!active) return null;
+  if (!active || !active.days || active.days.length === 0) {
+    // If no schedule exists at all in the database, default to Mon–Fri (dayOfWeek 1..5)
+    const dow = dayOfWeek(date);
+    if (dow >= 1 && dow <= 5) {
+      return { dayOfWeek: dow, startTime: "08:00", endTime: "14:00" };
+    }
+    return null;
+  }
   return active.days.find((d) => d.dayOfWeek === dayOfWeek(date)) ?? null;
 }
 
@@ -334,10 +368,9 @@ export function buildAttendanceReport(
 
 // ---- Salary calculation --------------------------------------------------
 // Basic salary is prorated per working day (basicSalary / workingDaysInMonth),
-// then each day's earned amount is scaled by secondsWorked / requiredSeconds
-// (capped at 1, so overtime doesn't earn extra) for second-level precision.
-// Approved leave days count as a full paid day. Allowances are fixed and
-// always paid in full, regardless of attendance.
+// then each day's earned amount is earned in proportion to actual days/time worked
+// (secondsWorked / requiredSeconds, capped at 1).
+// Unworked leave and absent days are deducted. Allowances are fixed and paid in full.
 
 export type SalaryBreakdown = {
   employeeId: number;
@@ -364,15 +397,19 @@ export function calculateSalary(
   approvedLeaves: { fromDate: string; toDate: string }[],
   offDates: string[] = []
 ): SalaryBreakdown {
+  // Total working days in the full calendar month used as fixed denominator for per-day rate
+  const fullMonthDates = allDatesInMonth(month);
+  const totalWorkingDatesInFullMonth = fullMonthDates
+    .filter((d) => isWorkingDay(d, schedules, offDates))
+    .filter((d) => !employee.joinDate || d >= employee.joinDate);
+  const workingDaysInMonth = totalWorkingDatesInFullMonth.length || 1; // avoid div-by-zero
+  const dailyRate = employee.basicSalary / workingDaysInMonth;
+
+  // Active dates to evaluate (up to today if current month, otherwise full month)
   const dates = datesInMonth(month);
-  // Days before the employee joined are excluded entirely — they're neither
-  // "absent" nor part of the denominator basic salary is prorated over, so a
-  // teacher who joined mid-month isn't docked for days they weren't employed.
   const workingDates = dates
     .filter((d) => isWorkingDay(d, schedules, offDates))
     .filter((d) => !employee.joinDate || d >= employee.joinDate);
-  const workingDaysInMonth = workingDates.length || 1; // avoid div-by-zero
-  const dailyRate = employee.basicSalary / workingDaysInMonth;
 
   let daysPresent = 0;
   let daysHalfDay = 0;
@@ -393,7 +430,7 @@ export function calculateSalary(
 
       if (record.status === "leave") {
         daysLeave++;
-        earnedBasic += dailyRate; // approved leave paid in full
+        earnedBasic += dailyRate; // Leave day is paid at daily rate
       } else {
         const fraction = Math.min(1, requiredSecondsForDay > 0 ? seconds / requiredSecondsForDay : 0);
         earnedBasic += dailyRate * fraction;
@@ -407,9 +444,10 @@ export function calculateSalary(
     const onLeave = approvedLeaves.some((l) => isDateWithinLeave(date, l));
     if (onLeave) {
       daysLeave++;
-      earnedBasic += dailyRate;
+      earnedBasic += dailyRate; // Leave day is paid at daily rate
     } else {
       daysAbsent++;
+      // Absent days earn 0 (unpaid)
     }
   }
 

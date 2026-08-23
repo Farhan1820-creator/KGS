@@ -32,8 +32,9 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
     db.query.fees.findMany({
       where: inArray(fees.month, monthsToQuery),
       with: { student: { with: { user: true, class: true } } },
+      orderBy: (t, { asc }) => [asc(t.id)],
     }),
-    db.query.classes.findMany(),
+    db.query.classes.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
     db.query.students.findMany({ with: { user: true } }),
     db.query.feeStructures.findMany(),
   ]);
@@ -42,6 +43,7 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
     id: f.id,
     studentId: f.studentId,
     studentName: f.student.user.name,
+    photoUrl: f.student.photoUrl,
     rollNumber: f.student.rollNumber,
     classId: f.student.classId,
     className: f.student.class?.name ?? "—",

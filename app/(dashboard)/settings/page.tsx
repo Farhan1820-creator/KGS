@@ -11,8 +11,8 @@ export default async function SettingsPage() {
   if (session.user.role !== "admin") redirect("/");
 
   const [subjectList, classList] = await Promise.all([
-    db.query.subjects.findMany(),
-    db.query.classes.findMany(),
+    db.query.subjects.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
+    db.query.classes.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
   ]);
 
   return <SettingsClient subjects={subjectList} classes={classList} />;
