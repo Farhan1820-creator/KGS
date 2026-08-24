@@ -299,21 +299,21 @@ const StudentDashboard = async ({ name }: StudentDashboardProps) => {
                 ⚔️ {pendingTasksList.length} active quest(s) waiting!
               </span>
               <Link href="/tasks" className="font-bold text-amber-600 dark:text-amber-400 hover:underline">
-                Turn in &rarr;
+                Submit &rarr;
               </Link>
             </div>
           ) : (
             <div className="p-2.5 rounded-xl border bg-emerald-500/5 border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
-              <span>All active quests completed!</span>
+              <span>All active assignments completed!</span>
             </div>
           )}
         </div>
 
         <div className="pt-2 border-t text-xs text-muted-foreground flex justify-between items-center">
-          <span>Active quests: {pendingTasksList.length}</span>
+          <span>Active tasks: {pendingTasksList.length}</span>
           <Link href="/tasks" className="text-primary hover:underline font-medium flex items-center gap-1">
-            Open Quest Board &rarr;
+            View Assignments &rarr;
           </Link>
         </div>
       </div>
@@ -323,41 +323,41 @@ const StudentDashboard = async ({ name }: StudentDashboardProps) => {
   return (
     <div className="page-shell space-y-6">
       {/* Welcome Banner */}
-      <div className="flex flex-col items-center justify-center py-6 w-full space-y-3">
-        {student?.photoUrl ? (
-          <img
-            src={student.photoUrl}
-            alt="Profile"
-            className="w-24 h-24 rounded-full object-cover border-4 border-muted shadow-sm ring-2 ring-primary/20"
-          />
-        ) : (
-          <div className="w-24 h-24 rounded-full bg-primary/10 text-primary flex items-center justify-center border-2 border-primary/20 shadow-sm">
-            <span className="text-3xl font-bold">
-              {name ? name.charAt(0).toUpperCase() : "?"}
-            </span>
-          </div>
-        )}
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-            Welcome, <span className="text-primary">{name || "Student"}</span>!
-          </h2>
-          {student?.class && (
-            <p className="text-xs text-muted-foreground font-medium">
-              {student.class.name} {student.class.section ? `(${student.class.section})` : ""} &bull; Roll No: {student.rollNumber || "N/A"}
-            </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {student?.photoUrl ? (
+            <img
+              src={student.photoUrl}
+              alt="Profile"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-primary/20 shadow-xs"
+            />
+          ) : (
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xl border border-primary/20 shadow-xs">
+              {name ? name.charAt(0).toUpperCase() : "S"}
+            </div>
           )}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Welcome, <span className="text-primary">{name || "Student"}</span>!
+            </h2>
+            {student?.class && (
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                Class {student.class.name} {student.class.section ? `(${student.class.section})` : ""} &bull; Roll No: {student.rollNumber || "—"}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Cards Grid */}
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 items-stretch max-w-6xl mx-auto">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 items-stretch">
         {attendanceCard}
         {taskInsightsCard}
         {testReportsCard}
       </div>
 
       {/* School Timing & Vacations */}
-      <div className="max-w-6xl mx-auto w-full">
+      <div className="w-full">
         <SchoolInfoCard />
       </div>
     </div>

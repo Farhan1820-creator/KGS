@@ -47,11 +47,11 @@ export async function SchoolInfoCard() {
       <div className="rounded-xl shadow-md bg-card border border-muted/50 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium">School Timing</h3>
+          <h3 className="text-sm font-medium">Timing</h3>
         </div>
 
         {weekly.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No school timing has been set up yet.</p>
+          <p className="text-sm text-muted-foreground">No timing has been set up yet.</p>
         ) : (
           <>
             <p className="text-sm">
