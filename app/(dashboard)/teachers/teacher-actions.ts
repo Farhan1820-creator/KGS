@@ -35,7 +35,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, email, password, contactNumber, subjectIds = [], joinDate } = parsed.data;
+  const { name, email, password, contactNumber, subjectIds = [], joinDate, photoUrl } = parsed.data;
 
   try {
     const hashed = await hash(password, 10);
@@ -44,7 +44,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
     // then compensate by deleting it if the dependent insert fails
     const [user] = await db
       .insert(users)
-      .values({ name, email, password: hashed, contactNumber, role: "teacher" })
+      .values({ name, email, password: hashed, contactNumber, role: "teacher", image: photoUrl || null })
       .returning({ id: users.id });
 
     try {
@@ -66,6 +66,7 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
               subjectId: subjectIds[0] ?? null,
               teacherId,
               joinDate,
+              photoUrl: photoUrl || null,
             })
             .returning({ id: teachers.id });
 
@@ -96,14 +97,13 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
 }
 
 // Updates a teacher's editable fields — name, contact, subjects, and teacher ID.
-// Email/password are left alone here.
 export async function updateTeacher(teacherId: number, formData: unknown): Promise<TeacherUpdateActionResult> {
   const parsed = teacherUpdateSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, errors: parsed.error.flatten().fieldErrors };
   }
 
-  const { name, contactNumber, subjectIds = [], teacherId: teacherCode, joinDate } = parsed.data;
+  const { name, contactNumber, subjectIds = [], teacherId: teacherCode, joinDate, photoUrl, email, password } = parsed.data;
 
   try {
     const teacher = await db.query.teachers.findFirst({
@@ -114,10 +114,23 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
       return { success: false, errors: { root: ["Teacher not found."] } };
     }
 
-    await db.update(users).set({ name, contactNumber }).where(eq(users.id, teacher.userId));
+    const userUpdates: Record<string, any> = { name, contactNumber, email };
+    if (photoUrl !== undefined) {
+      userUpdates.image = photoUrl || null;
+    }
+    if (password && password.length >= 8) {
+      userUpdates.password = await hash(password, 10);
+    }
+
+    await db.update(users).set(userUpdates).where(eq(users.id, teacher.userId));
     await db
       .update(teachers)
-      .set({ subjectId: subjectIds[0] ?? null, teacherId: teacherCode, joinDate })
+      .set({
+        subjectId: subjectIds[0] ?? null,
+        teacherId: teacherCode,
+        joinDate,
+        photoUrl: photoUrl || null,
+      })
       .where(eq(teachers.id, teacherId));
 
     // Update teacher_subjects table

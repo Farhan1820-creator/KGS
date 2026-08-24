@@ -25,7 +25,6 @@ import {
   ChevronDown,
   LogOut,
   X,
-  Sparkles,
 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 
@@ -124,13 +123,13 @@ interface SidebarProps {
   user?: {
     name?: string;
     email?: string;
+    image?: string | null;
   };
 }
 
 export function Sidebar({ role, user }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
-  const { mobileOpen, setMobileOpen } = useSidebar();
+  const { mobileOpen, setMobileOpen, collapsed, setCollapsed, toggleCollapsed } = useSidebar();
   const visibleLinks = links.filter((l) => l.roles.includes(role));
 
   const [openMenu, setOpenMenu] = useState<string | null>(
@@ -179,18 +178,18 @@ export function Sidebar({ role, user }: SidebarProps) {
       {/* Main Sidebar Aside */}
       <aside
         className={cn(
-          "fixed md:sticky top-0 z-50 h-screen flex flex-col justify-between border-r border-border/70 bg-card text-card-foreground shadow-xl md:shadow-none transition-all duration-300 ease-in-out select-none",
+          "fixed md:sticky top-0 z-50 h-screen h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col justify-between border-r border-border/70 bg-card text-card-foreground shadow-xl md:shadow-none transition-all duration-300 ease-in-out select-none",
           "w-72 md:w-64 max-w-[85vw]",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           collapsed && "md:w-20"
         )}
       >
         {/* Top Brand Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-border/60 bg-muted/20">
+        <div className="shrink-0 flex items-center justify-between px-4 py-3.5 border-b border-border/60 bg-muted/20">
           <Link
             href="/dashboard"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-3 min-w-0 group"
+            className={cn("flex items-center gap-3 min-w-0 group", collapsed && "mx-auto")}
           >
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs group-hover:scale-105 transition-transform">
               <Image
@@ -203,7 +202,6 @@ export function Sidebar({ role, user }: SidebarProps) {
                   (e.currentTarget as HTMLElement).style.display = "none";
                 }}
               />
-              <Sparkles className="h-4 w-4 text-primary absolute -bottom-1 -right-1" />
             </div>
 
             {!collapsed && (
@@ -218,17 +216,6 @@ export function Sidebar({ role, user }: SidebarProps) {
             )}
           </Link>
 
-          {/* Desktop Collapse Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden md:inline-flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
-            onClick={() => setCollapsed((c) => !c)}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-
           {/* Mobile Close Button */}
           <Button
             variant="ghost"
@@ -242,7 +229,7 @@ export function Sidebar({ role, user }: SidebarProps) {
         </div>
 
         {/* Scrollable Navigation Menu */}
-        <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto overflow-x-hidden scrollbar-thin">
+        <nav className="flex-1 min-h-0 px-3 py-3 space-y-4 overflow-y-auto overflow-x-hidden scrollbar-thin">
           {sections.map((sectionName) => {
             const sectionLinks = visibleLinks.filter((l) => (l.section || "General") === sectionName);
 
@@ -373,22 +360,33 @@ export function Sidebar({ role, user }: SidebarProps) {
         </nav>
 
         {/* User Profile & Logout Bottom Bar */}
-        <div className="p-3 border-t border-border/60 bg-muted/15 space-y-2">
-          {/* User Preview */}
-          <div
+        <div className="shrink-0 p-3 border-t border-border/60 bg-muted/15 space-y-2">
+          {/* User Profile Link */}
+          <Link
+            href="/profile"
+            onClick={() => setMobileOpen(false)}
+            title={collapsed ? `${user?.name || "Profile"}` : undefined}
             className={cn(
-              "flex items-center gap-3 p-2 rounded-xl bg-background/60 border border-border/50 shadow-2xs",
+              "flex items-center gap-3 p-2 rounded-xl bg-background/60 hover:bg-accent/70 border border-border/50 shadow-2xs hover:border-primary/40 hover:shadow-xs transition-all cursor-pointer group outline-none",
               collapsed && "md:justify-center md:p-1.5"
             )}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-xs text-primary-foreground shadow-2xs">
-              {initials}
-            </div>
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={user?.name || "Profile"}
+                className="h-9 w-9 shrink-0 rounded-lg object-cover border border-border/80 group-hover:scale-105 transition-transform"
+              />
+            ) : (
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary font-bold text-xs text-primary-foreground shadow-2xs group-hover:scale-105 transition-transform">
+                {initials}
+              </div>
+            )}
 
             {!collapsed && (
               <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-xs font-bold text-foreground truncate leading-tight">
-                  {user?.name || "Logged In"}
+                <span className="text-xs font-bold text-foreground group-hover:text-primary truncate leading-tight transition-colors">
+                  {user?.name || "My Profile"}
                 </span>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <Badge
@@ -400,7 +398,7 @@ export function Sidebar({ role, user }: SidebarProps) {
                 </div>
               </div>
             )}
-          </div>
+          </Link>
 
           {/* Logout Action */}
           <button

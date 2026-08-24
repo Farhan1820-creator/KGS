@@ -11,7 +11,6 @@ import {
   Search,
   BookOpen,
   GraduationCap,
-  Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -149,7 +148,7 @@ export function StudentNotesClient({
         </div>
 
         <Badge variant="outline" className="px-3 py-1 text-xs font-medium border-primary/20 bg-background/60">
-          <Sparkles className="h-3.5 w-3.5 text-primary mr-1" />
+          <BookOpen className="h-3.5 w-3.5 text-primary mr-1" />
           {filteredNotes.length} {filteredNotes.length === 1 ? "Note Available" : "Notes Available"}
         </Badge>
       </div>

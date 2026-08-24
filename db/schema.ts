@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }).notNull(), // hashed, never plain
   contactNumber: varchar("contact_number", { length: 20 }),
   role: roleEnum("role").notNull(),
+  image: varchar("image", { length: 500 }), // profile picture URL (Cloudinary)
   // Soft-delete flag — set to false when a student/teacher leaves instead of
   // deleting their record. All financial history, attendance, and diary entries
   // are preserved. Flip back to true for re-admissions.
@@ -53,6 +54,7 @@ export const teachers = pgTable("teachers", {
   subjectId: integer("subject_id").references(() => subjects.id), // legacy single subject column
   teacherId: varchar("teacher_id", { length: 20 }).unique(), // system-generated, e.g. "2026-TCH-007"
   joinDate: date("join_date"), // "YYYY-MM-DD"
+  photoUrl: varchar("photo_url", { length: 500 }), // Cloudinary URL
 });
 
 // Many-to-many join table for multiple subjects per teacher

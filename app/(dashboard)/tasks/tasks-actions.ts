@@ -81,10 +81,10 @@ export async function createTask(input: CreateTaskInput) {
 
     if (userIds.length > 0) {
       const msg = subjectName
-        ? `New task in ${subjectName}: "${title}". Total Score: ${totalPoints}`
-        : `New task assigned: "${title}". Total Score: ${totalPoints}`;
+        ? `New assignment in ${subjectName}: "${title}". Total Marks: ${totalPoints}`
+        : `New assignment assigned: "${title}". Total Marks: ${totalPoints}`;
 
-      await sendNotificationToMultiple(userIds, `⚔️ New Task: ${title}`, msg, "/tasks");
+      await sendNotificationToMultiple(userIds, `📚 New Assignment: ${title}`, msg, "/tasks");
     }
 
     revalidatePath("/tasks");
@@ -101,7 +101,7 @@ export async function submitTask(
   payload: { submissionText?: string | null; submissionImageUrl?: string | null }
 ) {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id || session.user.role !== "student") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -109,22 +109,13 @@ export async function submitTask(
     const assignment = await db.query.taskAssignments.findFirst({
       where: eq(taskAssignments.id, assignmentId),
       with: {
-        task: {
-          with: { teacher: true },
-        },
-        student: {
-          with: { user: true },
-        },
+        task: true,
+        student: { with: { user: true } },
       },
     });
 
     if (!assignment) {
-      return { success: false, error: "Task assignment not found" };
-    }
-
-    // Verify student ownership
-    if (session.user.role === "student" && assignment.student.userId !== Number(session.user.id)) {
-      return { success: false, error: "Unauthorized" };
+      return { success: false, error: "Assignment not found" };
     }
 
     await db
@@ -143,8 +134,8 @@ export async function submitTask(
       const studentName = assignment.student?.user?.name ?? "A student";
       await sendNotification(
         assignment.task.teacherId,
-        `📩 Quest Submitted: ${assignment.task.title}`,
-        `${studentName} completed and submitted their homework for "${assignment.task.title}".`,
+        `📩 Assignment Submitted: ${assignment.task.title}`,
+        `${studentName} completed and submitted homework for "${assignment.task.title}".`,
         "/tasks"
       );
     }
@@ -202,8 +193,8 @@ export async function gradeTask(
       const feedbackMsg = payload.feedback ? ` | Feedback: "${payload.feedback}"` : "";
       await sendNotification(
         assignment.student.userId,
-        `🏆 Quest Graded: ${assignment.task.title}`,
-        `You scored ${achieved}/${totalPoints} (${percentage}%)${feedbackMsg}`,
+        `📝 Task Graded: ${assignment.task.title}`,
+        `You scored ${achieved}/${totalPoints} marks (${percentage}%)${feedbackMsg}`,
         "/tasks"
       );
     }

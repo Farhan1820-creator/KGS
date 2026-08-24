@@ -12,7 +12,6 @@ import {
 } from "./teacher-validation";
 
 // One form handles both create and edit modes by swapping the resolver.
-// Merged type is the union of all fields from both schemas so register("teacherId") is valid.
 type TeacherAnyFormValues = TeacherFormValues & Partial<TeacherUpdateFormValues>;
 
 import { createTeacher, updateTeacher, previewNextTeacherId } from "./teacher-actions";
@@ -23,6 +22,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Check, X } from "lucide-react";
 import type { TeacherRow } from "./teacher-columns";
+import { PhotoUploadSquare } from "@/components/layout/photo-upload-square";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import { deleteCloudinaryImage } from "@/lib/cloudinary-server";
 
 type DialogMode = "view" | "edit" | "create";
 
@@ -47,6 +49,7 @@ const emptyDefaults: TeacherAnyFormValues = {
   contactNumber: "",
   subjectIds: [],
   joinDate: todayDate(),
+  photoUrl: "",
 };
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -58,22 +61,15 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function initialsOf(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("") || "?";
-}
-
-// One dialog for viewing, editing, and creating a teacher. Opens in "view"
-// mode (a read-only summary) with an Edit button that switches the same
-// dialog into the form — no separate detail dialog to keep in sync.
 export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, mode: initialMode = "view" }: TeacherDialogProps) {
   const isCreate = !teacher;
   const [mode, setMode] = useState<DialogMode>(isCreate ? "create" : initialMode);
   const [idPreview, setIdPreview] = useState<string | null>(null);
+
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [removingPhoto, setRemovingPhoto] = useState(false);
 
   const {
     register,
@@ -119,15 +115,17 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
         subjectIds: teacher.subjectIds ?? [],
         teacherId: teacher.teacherId ?? "",
         joinDate: teacher.joinDate ?? todayDate(),
+        photoUrl: teacher.photoUrl ?? "",
       });
+      setPhotoPreview(teacher.photoUrl ?? null);
     } else {
       reset(emptyDefaults);
+      setPhotoPreview(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, teacher, initialMode]);
 
-  // Show a live preview of the teacher ID a new teacher will get — the
-  // actual ID is only reserved server-side at submit time.
+  // Show a live preview of the teacher ID a new teacher will get
   useEffect(() => {
     if (!open || mode !== "create") {
       setIdPreview(null);
@@ -141,6 +139,38 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
       cancelled = true;
     };
   }, [open, mode]);
+
+  async function handlePhotoChange(file: File) {
+    setUploadingPhoto(true);
+    setUploadProgress(0);
+    try {
+      const result = await uploadImageToCloudinary(file, { onProgress: setUploadProgress });
+      setValue("photoUrl", result.url, { shouldDirty: true });
+      setPhotoPreview(result.url);
+      toast.success("Photo uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Photo upload failed. Try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function handlePhotoRemove() {
+    const currentUrl = photoPreview;
+    setRemovingPhoto(true);
+    try {
+      const result = await deleteCloudinaryImage(currentUrl);
+      if (!result.success) {
+        toast.error("Could not remove photo. Try again.");
+        return;
+      }
+      setValue("photoUrl", "", { shouldDirty: true });
+      setPhotoPreview(null);
+      toast.success("Photo removed");
+    } finally {
+      setRemovingPhoto(false);
+    }
+  }
 
   async function onSubmit(values: TeacherAnyFormValues) {
     const res = mode === "edit" && teacher
@@ -161,6 +191,8 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
     onSaved();
   }
 
+  const isFormMode = mode === "create" || mode === "edit";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl lg:max-w-3xl">
@@ -179,15 +211,19 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1fr_132px] sm:gap-8">
-          {/* Initials avatar — top-right on landscape screens, matching the
-              student dialog's photo slot even though teachers have no photo. */}
+          {/* Photo Slot */}
           <div className="order-1 flex justify-center sm:order-2 sm:justify-end">
-            <div
-              className="flex items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/25 bg-muted/40 text-2xl font-semibold text-muted-foreground/70"
-              style={{ width: 132, height: 132 }}
-            >
-              {initialsOf(teacher?.name ?? "?")}
-            </div>
+            <PhotoUploadSquare
+              photoUrl={isFormMode ? photoPreview : teacher?.photoUrl ?? null}
+              name={watch("name") || teacher?.name}
+              editable={isFormMode}
+              uploading={uploadingPhoto}
+              progress={uploadProgress}
+              onFileSelected={handlePhotoChange}
+              onRemove={photoPreview ? handlePhotoRemove : undefined}
+              removing={removingPhoto}
+              size={132}
+            />
           </div>
 
           <div className="order-2 sm:order-1">

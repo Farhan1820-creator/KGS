@@ -44,6 +44,7 @@ export default async function TeachersPage() {
       subjectName: subjectNames.length > 0 ? subjectNames.join(", ") : "—",
       teacherId: t.teacherId,
       joinDate: t.joinDate,
+      photoUrl: t.photoUrl || (t.user as any).image || null,
       isActive: t.user.isActive,
     };
   });

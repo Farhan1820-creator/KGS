@@ -17,7 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { createTask } from "./tasks-actions";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { toast } from "sonner";
-import { UploadCloud, X, Loader2, Sparkles, CheckSquare, Square, Calendar } from "lucide-react";
+import { UploadCloud, X, Loader2, CheckSquare, Square, Calendar, Eye } from "lucide-react";
+import { ImagePreviewDialog } from "./image-preview-dialog";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -46,6 +47,7 @@ export function CreateTaskDialog({
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -168,7 +170,7 @@ export function CreateTaskDialog({
       <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] p-4 sm:p-6 overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <CheckSquare className="h-5 w-5 text-primary" />
             Create & Assign New Task
           </DialogTitle>
         </DialogHeader>
@@ -296,7 +298,8 @@ export function CreateTaskDialog({
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="h-14 w-14 object-cover rounded-lg border shrink-0"
+                    className="h-14 w-14 object-cover rounded-lg border shrink-0 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setPreviewOpen(true)}
                   />
                   <div className="text-xs min-w-0">
                     <p className="font-medium truncate">
@@ -305,6 +308,13 @@ export function CreateTaskDialog({
                     <p className="text-muted-foreground text-[11px]">
                       {(imageFile?.size ? imageFile.size / 1024 : 0).toFixed(1)} KB
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewOpen(true)}
+                      className="text-primary hover:underline text-[11px] font-medium inline-flex items-center gap-1 mt-0.5"
+                    >
+                      <Eye className="h-3 w-3" /> Preview Full
+                    </button>
                   </div>
                 </div>
                 <Button
@@ -346,7 +356,7 @@ export function CreateTaskDialog({
           {/* Points & Due Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="space-y-1.5">
-              <Label htmlFor="task-points" className="text-xs font-semibold">Total Score / Points</Label>
+              <Label htmlFor="task-points" className="text-xs font-semibold">Total Marks</Label>
               <Input
                 id="task-points"
                 type="number"
@@ -394,6 +404,15 @@ export function CreateTaskDialog({
           </div>
         </form>
       </DialogContent>
+
+      {/* Full Size Image Preview Modal with Zoom & Rotate */}
+      <ImagePreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        imageUrl={imagePreview}
+        title={imageFile?.name ? `Question Image Preview — ${imageFile.name}` : "Question Image Preview"}
+        filename={imageFile?.name || "question-attachment.jpg"}
+      />
     </Dialog>
   );
 }

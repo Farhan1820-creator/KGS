@@ -54,10 +54,15 @@ export function NotificationsDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <Button variant="ghost" size="icon" className="relative ml-auto" onClick={toggleOpen}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative ml-auto text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors"
+        onClick={toggleOpen}
+      >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600 border border-background"></span>
+          <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-primary border-2 border-background"></span>
         )}
       </Button>
 

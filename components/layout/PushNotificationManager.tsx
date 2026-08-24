@@ -15,21 +15,35 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function PushNotificationManager() {
   useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window) {
+      // If user blocked/denied notifications in browser settings, do not prompt again
+      if (Notification.permission === "denied") {
+        return;
+      }
       registerServiceWorkerAndSubscribe();
     }
   }, []);
 
   async function registerServiceWorkerAndSubscribe() {
     try {
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      
-      const permission = await Notification.requestPermission();
+      const registration = await navigator.serviceWorker.register("/sw.js").catch(() => null);
+      if (!registration) return;
+
+      let permission = Notification.permission;
+      if (permission === "default") {
+        try {
+          permission = await Notification.requestPermission();
+        } catch {
+          // Ignore if user dismisses or blocks
+          return;
+        }
+      }
+
       if (permission === "granted") {
         await subscribeUser(registration);
       }
-    } catch (error) {
-      console.error("Service Worker registration failed:", error);
+    } catch {
+      // Gracefully handle any browser restriction
     }
   }
 
@@ -50,11 +64,10 @@ export function PushNotificationManager() {
         },
         body: JSON.stringify(subscription),
       });
-    } catch (error) {
-      console.error("Failed to subscribe user:", error);
+    } catch {
+      // Ignored silently if push subscription is unsupported/blocked
     }
   }
 
   return null;
 }
-

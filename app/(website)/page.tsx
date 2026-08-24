@@ -2,6 +2,7 @@ import Navbar from "./Navbar";
 import Hero from "./Hero";
 import WhyLearnex from "./WhyLearnex";
 import Courses from "./Courses";
+import CinematicVideo from "./CinematicVideo";
 import Stats from "./Stats";
 import CtaBanner from "./CtaBanner";
 import Footer from "./Footer";
@@ -13,7 +14,7 @@ const organizationSchema = {
   url: "https://www.thelearnexacademy.com",
   logo: "https://www.thelearnexacademy.com/logo.png",
   description:
-    "The Learnex Academy helps students build real, practical skills through structured courses and mentorship.",
+    "The Learnex Academy offers premier academic coaching for School (PG–Matric), O Level, College Intermediate (FSc, ICom, ICS), University/Bachelor students, and CA (PRC), along with practical Canva and MS Office courses.",
 };
 
 export default function Home() {
@@ -29,6 +30,7 @@ export default function Home() {
         <Hero />
         <WhyLearnex />
         <Courses />
+        <CinematicVideo />
         <Stats />
         <CtaBanner />
       </main>

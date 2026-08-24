@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { gradeTask } from "./tasks-actions";
 import { toast } from "sonner";
-import { Award, CheckCircle, ExternalLink, Loader2, Star } from "lucide-react";
+import { Award, CheckCircle, ExternalLink, Loader2, Star, Download, Eye } from "lucide-react";
+import { ImagePreviewDialog, downloadImageFile } from "./image-preview-dialog";
 
 export interface SubmissionItem {
   id: number; // taskAssignments.id
@@ -156,8 +157,23 @@ export function GradeSubmissionDialog({
 
               {/* Student Uploaded Image */}
               {submission.submissionImageUrl ? (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-xs text-muted-foreground font-medium">Attached Homework Proof:</span>
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground font-medium">Attached Homework Proof:</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        downloadImageFile(
+                          submission.submissionImageUrl!,
+                          `${submission.studentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-proof.jpg`
+                        )
+                      }
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download Image
+                    </button>
+                  </div>
                   <div className="relative group rounded-xl overflow-hidden border max-w-sm">
                     <img
                       src={submission.submissionImageUrl}
@@ -169,8 +185,8 @@ export function GradeSubmissionDialog({
                       className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-white text-xs font-medium gap-1.5"
                       onClick={() => setPreviewImage(submission.submissionImageUrl!)}
                     >
-                      <ExternalLink className="h-4 w-4" />
-                      Click to expand image
+                      <Eye className="h-4 w-4" />
+                      Click to expand & preview
                     </div>
                   </div>
                 </div>
@@ -247,20 +263,24 @@ export function GradeSubmissionDialog({
         </DialogContent>
       </Dialog>
 
-      {/* Full Size Image Preview Modal */}
-      {previewImage && (
-        <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-          <DialogContent className="w-[95vw] max-w-3xl p-2 bg-black/90 border-none">
-            <div className="relative flex items-center justify-center p-2">
-              <img
-                src={previewImage}
-                alt="Full Proof View"
-                className="max-h-[85vh] w-auto object-contain rounded-lg shadow-2xl"
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Full Size Image Preview Modal with Download & Zoom */}
+      <ImagePreviewDialog
+        open={!!previewImage}
+        onOpenChange={(open) => {
+          if (!open) setPreviewImage(null);
+        }}
+        imageUrl={previewImage}
+        title={
+          submission
+            ? `${submission.studentName}'s Homework Proof — ${submission.taskTitle}`
+            : "Attachment Preview"
+        }
+        filename={
+          submission
+            ? `${submission.studentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-proof.jpg`
+            : "homework-proof.jpg"
+        }
+      />
     </>
   );
 }

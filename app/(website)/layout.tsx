@@ -13,16 +13,16 @@ const siteUrl = "https://www.thelearnexacademy.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "The Learnex Academy — Learn Skills That Open Doors",
+  title: "The Learnex Academy — School, College, University & Professional Courses",
   description:
-    "The Learnex Academy helps students build real, practical skills through structured courses and mentorship — MERN stack, UI/UX, and freelancing programs.",
+    "The Learnex Academy offers expert coaching from Class PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelor Degrees, CA (PRC), plus Canva and MS Office courses.",
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "The Learnex Academy — Learn Skills That Open Doors",
+    title: "The Learnex Academy — School, College, University & Professional Courses",
     description:
-      "Structured courses and real mentorship to help you build job-ready skills at your own pace.",
+      "Premier coaching for PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelors, CA (PRC), Canva Graphic Design & MS Office.",
     url: siteUrl,
     siteName: "The Learnex Academy",
     images: [{ url: "/logo.png", width: 1080, height: 1080 }],
@@ -30,9 +30,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Learnex Academy — Learn Skills That Open Doors",
+    title: "The Learnex Academy — School, College, University & Professional Courses",
     description:
-      "Structured courses and real mentorship to help you build job-ready skills at your own pace.",
+      "Premier coaching for PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelors, CA (PRC), Canva & MS Office.",
     images: ["/logo.png"],
   },
 };

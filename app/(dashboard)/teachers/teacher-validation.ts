@@ -11,6 +11,7 @@ export const teacherSchema = z.object({
     .regex(/^[0-9+\-\s]{7,20}$/, "Enter a valid contact number"),
   subjectIds: z.array(z.coerce.number()).default([]),
   joinDate: z.string().regex(dateRegex, "Select a valid date"),
+  photoUrl: z.string().optional(),
 });
 
 export type TeacherFormValues = z.infer<typeof teacherSchema>;
@@ -27,6 +28,7 @@ export const teacherUpdateSchema = z.object({
   subjectIds: z.array(z.coerce.number()).default([]),
   teacherId: z.string().min(1, "Teacher ID is required"),
   joinDate: z.string().regex(dateRegex, "Select a valid date"),
+  photoUrl: z.string().optional(),
 });
 
 export type TeacherUpdateFormValues = z.infer<typeof teacherUpdateSchema>;

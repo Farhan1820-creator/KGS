@@ -19,7 +19,7 @@ import { FeeStructureDialog } from "./fee-structure-dialog";
 import { FeeDetailDialog } from "./fee-detail-dialog";
 import { generateFeesForMonth, markFeePaid, markFeeUnpaid, updateFeeAmount } from "./fee-actions";
 import { currentMonth } from "./fee-range";
-import { Settings2, Sparkles, X } from "lucide-react";
+import { Settings2, Receipt, X } from "lucide-react";
 
 interface FeesClientProps {
   initialData: FeeRow[];
@@ -191,7 +191,7 @@ export function FeesClient({
                 className="w-40 h-10"
               />
               <Button onClick={handleGenerate} disabled={isPending} size="default" className="h-10 shadow-xs">
-                <Sparkles className="h-4 w-4 mr-1.5" />
+                <Receipt className="h-4 w-4 mr-1.5" />
                 Generate Fees
               </Button>
             </div>

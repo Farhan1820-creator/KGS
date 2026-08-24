@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Image, FileSpreadsheet, Presentation, File, Download, X, BookOpen, Sparkles } from "lucide-react";
+import { FileText, Image, FileSpreadsheet, Presentation, File, Download, X, BookOpen } from "lucide-react";
 
 interface NoteItem {
   id: number;
@@ -71,7 +71,7 @@ export function NotesGrid({ notes, subjects, className, isWebsiteStudent, studen
       {isWebsiteStudent && !welcomeDismissed && (
         <div className="mb-6 flex items-start gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-5">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-600 shadow-md shadow-blue-200">
-            <Sparkles size={20} className="text-white" />
+            <BookOpen size={20} className="text-white" />
           </div>
           <div className="flex-1">
             <p className="font-semibold text-blue-900">

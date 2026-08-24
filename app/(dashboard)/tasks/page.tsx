@@ -4,7 +4,7 @@ import { tasks, taskAssignments, students, subjects, classes, users } from "@/db
 import { eq, desc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { TeacherTasksView, TaskRecord } from "./teacher-tasks-view";
-import { StudentTasksView, StudentQuestItem } from "./student-tasks-view";
+import { StudentTasksView, StudentTaskItem } from "./student-tasks-view";
 
 export default async function TasksPage() {
   const session = await auth();
@@ -47,7 +47,7 @@ export default async function TasksPage() {
       orderBy: [desc(taskAssignments.createdAt)],
     });
 
-    const quests: StudentQuestItem[] = assignments.map((a) => ({
+    const tasks: StudentTaskItem[] = assignments.map((a) => ({
       assignmentId: a.id,
       taskId: a.taskId,
       title: a.task.title,
@@ -69,7 +69,7 @@ export default async function TasksPage() {
     return (
       <StudentTasksView
         studentName={student.user?.name || session.user.name || "Student"}
-        quests={quests}
+        tasks={tasks}
       />
     );
   }

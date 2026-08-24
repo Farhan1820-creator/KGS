@@ -36,8 +36,10 @@ import {
   Image as ImageIcon,
   BookOpen,
   ArrowRight,
-  Sparkles,
+  Download,
+  Eye,
 } from "lucide-react";
+import { ImagePreviewDialog, downloadImageFile } from "./image-preview-dialog";
 
 export interface TaskRecord {
   id: number;
@@ -87,6 +89,7 @@ export function TeacherTasksView({
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionItem | null>(null);
 
   const [activeSubmissionsTask, setActiveSubmissionsTask] = useState<TaskRecord | null>(null);
+  const [previewData, setPreviewData] = useState<{ url: string; title: string; filename?: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
@@ -360,9 +363,35 @@ export function TeacherTasksView({
 
                   {/* Attachment indicator if image exists */}
                   {task.imageUrl && (
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-primary">
-                      <ImageIcon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">Question Image Attached</span>
+                    <div className="mt-2.5 flex items-center gap-2 text-xs border-t border-dashed pt-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPreviewData({
+                            url: task.imageUrl!,
+                            title: `${task.title} — Attached Question`,
+                            filename: `${task.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}-question.jpg`,
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        View Attached Question
+                      </button>
+                      <span className="text-muted-foreground">•</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadImageFile(
+                            task.imageUrl!,
+                            `${task.title.toLowerCase().replace(/[^a-z0-9]/g, "-")}-question.jpg`
+                          )
+                        }
+                        className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Download
+                      </button>
                     </div>
                   )}
                 </div>
@@ -470,6 +499,40 @@ export function TeacherTasksView({
                           </span>
                         )}
                       </div>
+
+                      {/* Student Attached Proof (Quick View & Download) */}
+                      {assignment.submissionImageUrl && (
+                        <div className="flex items-center gap-2 pt-1 text-xs">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviewData({
+                                url: assignment.submissionImageUrl!,
+                                title: `${assignment.studentName}'s Homework Proof — ${activeSubmissionsTask.title}`,
+                                filename: `${assignment.studentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-proof.jpg`,
+                              })
+                            }
+                            className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View Attached Proof
+                          </button>
+                          <span className="text-muted-foreground">•</span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              downloadImageFile(
+                                assignment.submissionImageUrl!,
+                                `${assignment.studentName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-proof.jpg`
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Download
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="self-end sm:self-auto w-full sm:w-auto">
@@ -517,6 +580,17 @@ export function TeacherTasksView({
             setActiveSubmissionsTask(null);
           }
         }}
+      />
+
+      {/* Full Image Preview Modal with Download & Zoom */}
+      <ImagePreviewDialog
+        open={!!previewData}
+        onOpenChange={(open) => {
+          if (!open) setPreviewData(null);
+        }}
+        imageUrl={previewData?.url || null}
+        title={previewData?.title}
+        filename={previewData?.filename}
       />
     </div>
   );

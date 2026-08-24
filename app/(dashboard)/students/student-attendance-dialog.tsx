@@ -32,7 +32,6 @@ import {
   User,
   Loader2,
   Calendar,
-  Sparkles,
   TrendingUp,
   AlertCircle,
   FileSpreadsheet,
