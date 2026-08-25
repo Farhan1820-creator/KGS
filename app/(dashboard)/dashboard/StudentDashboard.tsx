@@ -322,30 +322,28 @@ const StudentDashboard = async ({ name }: StudentDashboardProps) => {
 
   return (
     <div className="page-shell space-y-6">
-      {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          {student?.photoUrl ? (
-            <img
-              src={student.photoUrl}
-              alt="Profile"
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-primary/20 shadow-xs"
-            />
-          ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xl border border-primary/20 shadow-xs">
-              {name ? name.charAt(0).toUpperCase() : "S"}
-            </div>
-          )}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-              Welcome, <span className="text-primary">{name || "Student"}</span>!
-            </h2>
-            {student?.class && (
-              <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                Class {student.class.name} {student.class.section ? `(${student.class.section})` : ""} &bull; Roll No: {student.rollNumber || "—"}
-              </p>
-            )}
+      {/* Welcome Banner: Centered Image and Welcome Note */}
+      <div className="flex flex-col items-center justify-center text-center gap-3 py-4">
+        {student?.photoUrl ? (
+          <img
+            src={student.photoUrl}
+            alt="Profile"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-primary/20 shadow-md ring-2 ring-background"
+          />
+        ) : (
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl sm:text-3xl border-2 border-primary/20 shadow-md">
+            {name ? name.charAt(0).toUpperCase() : "S"}
           </div>
+        )}
+        <div className="space-y-1">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Welcome, <span className="text-primary">{name || "Student"}</span>!
+          </h2>
+          {student?.class && (
+            <p className="text-sm text-muted-foreground font-medium">
+              {student.class.name} {student.class.section ? `(${student.class.section})` : ""} &bull; Roll No: {student.rollNumber || "—"}
+            </p>
+          )}
         </div>
       </div>
 

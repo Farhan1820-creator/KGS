@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { employees, attendance } from "@/db/schema";
+import { employees, attendance, teachers } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { SelfAttendanceCard } from "../payroll/attendance/self-attendance-card";
 import { todayString, requiredSecondsForDate, statusFromSeconds, type WorkSchedule } from "../payroll/attendance/attendance-helpers";
@@ -10,13 +10,19 @@ import { SchoolInfoCard } from "./school-info-card";
 
 type TeacherDashboardProps = {
   name?: string | null;
+  image?: string | null;
 };
 
-const TeacherDashboard = async ({ name }: TeacherDashboardProps) => {
+const TeacherDashboard = async ({ name, image }: TeacherDashboardProps) => {
   const session = await auth();
-  const employee = session?.user?.id
-    ? await db.query.employees.findFirst({ where: eq(employees.userId, Number(session.user.id)) })
-    : null;
+  const userId = session?.user?.id ? Number(session.user.id) : null;
+
+  const [employee, teacher] = await Promise.all([
+    userId ? db.query.employees.findFirst({ where: eq(employees.userId, userId) }) : null,
+    userId ? db.query.teachers.findFirst({ where: eq(teachers.userId, userId) }) : null,
+  ]);
+
+  const photoUrl = teacher?.photoUrl || image;
 
   let attendanceCard = null;
 
@@ -72,10 +78,29 @@ const TeacherDashboard = async ({ name }: TeacherDashboardProps) => {
 
   return (
     <div className="page-shell space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
-          Welcome, <span className="text-primary">{name ? `${name}` : "Teacher"}</span>!
-        </h2>
+      {/* Welcome Banner: Centered Image and Welcome Note */}
+      <div className="flex flex-col items-center justify-center text-center gap-3 py-4">
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt="Profile"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-primary/20 shadow-md ring-2 ring-background"
+          />
+        ) : (
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl sm:text-3xl border-2 border-primary/20 shadow-md">
+            {name ? name.charAt(0).toUpperCase() : "T"}
+          </div>
+        )}
+        <div className="space-y-1">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Welcome, <span className="text-primary">{name ? `${name}` : "Teacher"}</span>!
+          </h2>
+          {teacher?.teacherId && (
+            <p className="text-sm text-muted-foreground font-medium">
+              Teacher ID: {teacher.teacherId}
+            </p>
+          )}
+        </div>
       </div>
 
       {attendanceCard ?? (

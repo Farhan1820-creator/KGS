@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopHeader } from "@/components/layout/top-header";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,6 +9,11 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { users, students, teachers } from "@/db/schema";
 import { eq } from "drizzle-orm";
+
+export const metadata: Metadata = {
+  title: "Learnex LMS",
+  description: "Learning Management System",
+};
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
