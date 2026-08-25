@@ -42,9 +42,12 @@ export async function updateProfile(formData: ProfileFormValues) {
   try {
     const userUpdates: Record<string, any> = {
       name,
-      contactNumber: contactNumber || null,
       image: photoUrl || null,
     };
+
+    if (contactNumber !== undefined) {
+      userUpdates.contactNumber = contactNumber || null;
+    }
 
     if (password && password.length >= 8) {
       userUpdates.password = await hash(password, 10);

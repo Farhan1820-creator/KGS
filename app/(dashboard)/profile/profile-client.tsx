@@ -57,7 +57,6 @@ export function ProfileClient({ user }: ProfileClientProps) {
   const router = useRouter();
 
   const [name, setName] = useState(user.name);
-  const [contactNumber, setContactNumber] = useState(user.contactNumber || "");
   const [photoUrl, setPhotoUrl] = useState<string | null>(user.photoUrl);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -124,7 +123,6 @@ export function ProfileClient({ user }: ProfileClientProps) {
     try {
       const res = await updateProfile({
         name: name.trim(),
-        contactNumber: contactNumber.trim() || undefined,
         photoUrl: photoUrl || null,
         password: password || undefined,
       });
@@ -300,12 +298,12 @@ export function ProfileClient({ user }: ProfileClientProps) {
                       <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="phone"
-                        value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
-                        placeholder="e.g. +92 300 1234567"
-                        className="pl-9 h-9 text-sm"
+                        value={user.contactNumber || "Not provided"}
+                        disabled
+                        className="pl-9 h-9 text-sm bg-muted/50 cursor-not-allowed opacity-90"
                       />
                     </div>
+                    <p className="text-[10px] text-muted-foreground">Phone number is managed by academy administration.</p>
                   </div>
 
                   <div className="space-y-1.5">
