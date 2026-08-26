@@ -28,7 +28,7 @@ function NotificationContent({
   isUnseen: boolean;
 }) {
   return (
-    <div>
+    <div className="text-center sm:text-left">
       <h4
         className={`text-sm leading-snug mb-1 ${
           isUnseen ? "font-semibold text-white" : "font-medium text-slate-800"

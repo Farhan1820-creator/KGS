@@ -216,8 +216,10 @@ body {
 
   .apple-toast-item {
     border-radius: 28px !important;
-    padding: 10px 16px 10px 12px !important;
+    padding: 10px 16px 10px 14px !important;
     min-height: 52px;
+    justify-content: center !important;
+    text-align: center !important;
     
     /* iOS Dynamic Island & Notification Banner Style */
     background: rgba(22, 22, 24, 0.88) !important;
@@ -230,6 +232,11 @@ body {
       0 6px 16px -2px rgba(0, 0, 0, 0.24),
       0 0 0 1px rgba(255, 255, 255, 0.12) inset !important;
     color: #ffffff !important;
+  }
+
+  .apple-toast-title,
+  .apple-toast-desc {
+    text-align: center !important;
   }
 }
 
