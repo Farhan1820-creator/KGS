@@ -182,10 +182,11 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
       : await createTeacher(values as TeacherFormValues);
 
     if (!res.success) {
+      const errMap = res.errors as Record<string, string[] | undefined> | undefined;
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
         setError(key as keyof TeacherAnyFormValues, { message: (msgs as string[] | undefined)?.[0] });
       });
-      const errorMsg = res.errors?.email?.[0] || res.errors?.teacherId?.[0] || res.errors?.root?.[0] || "Please fix the errors and try again";
+      const errorMsg = errMap?.email?.[0] || errMap?.teacherId?.[0] || errMap?.root?.[0] || "Please fix the errors and try again";
       toast.error(errorMsg);
       return;
     }
