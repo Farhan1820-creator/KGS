@@ -52,31 +52,33 @@ export default async function DashboardNotesPage() {
       );
     }
 
-    const [classInfo] = await db
-      .select({ name: classes.name, section: classes.section })
-      .from(classes)
-      .where(eq(classes.id, student.classId))
-      .limit(1);
-
-    const studentNotesRows = await db
-      .select({
-        id: notes.id,
-        title: notes.title,
-        description: notes.description,
-        fileUrl: notes.fileUrl,
-        fileName: notes.fileName,
-        fileType: notes.fileType,
-        fileSize: notes.fileSize,
-        createdAt: notes.createdAt,
-        subjectId: notes.subjectId,
-        subjectName: subjects.name,
-        uploaderName: users.name,
-      })
-      .from(notes)
-      .leftJoin(subjects, eq(notes.subjectId, subjects.id))
-      .leftJoin(users, eq(notes.uploadedBy, users.id))
-      .where(eq(notes.classId, student.classId))
-      .orderBy(notes.createdAt);
+    const [[classInfo], studentNotesRows] = await Promise.all([
+      db
+        .select({ name: classes.name, section: classes.section })
+        .from(classes)
+        .where(eq(classes.id, student.classId))
+        .limit(1),
+      db
+        .select({
+          id: notes.id,
+          title: notes.title,
+          description: notes.description,
+          fileUrl: notes.fileUrl,
+          fileName: notes.fileName,
+          fileType: notes.fileType,
+          fileSize: notes.fileSize,
+          youtubeUrl: notes.youtubeUrl,
+          createdAt: notes.createdAt,
+          subjectId: notes.subjectId,
+          subjectName: subjects.name,
+          uploaderName: users.name,
+        })
+        .from(notes)
+        .leftJoin(subjects, eq(notes.subjectId, subjects.id))
+        .leftJoin(users, eq(notes.uploadedBy, users.id))
+        .where(eq(notes.classId, student.classId))
+        .orderBy(notes.createdAt),
+    ]);
 
     const studentSubjects = Array.from(
       new Map(
@@ -101,6 +103,7 @@ export default async function DashboardNotesPage() {
             fileName: n.fileName,
             fileType: n.fileType,
             fileSize: n.fileSize,
+            youtubeUrl: n.youtubeUrl,
             createdAt: n.createdAt.toISOString(),
             subjectId: n.subjectId,
             subjectName: n.subjectName,
@@ -115,29 +118,42 @@ export default async function DashboardNotesPage() {
   }
 
   // ── Admin / Teacher / Staff View ──────────────────────────────
-  // Fetch all notes with class + subject + uploader
-  const rows = await db
-    .select({
-      id: notes.id,
-      title: notes.title,
-      description: notes.description,
-      fileUrl: notes.fileUrl,
-      fileName: notes.fileName,
-      fileType: notes.fileType,
-      fileSize: notes.fileSize,
-      createdAt: notes.createdAt,
-      classId: notes.classId,
-      className: classes.name,
-      classSection: classes.section,
-      subjectId: notes.subjectId,
-      subjectName: subjects.name,
-      uploaderName: users.name,
-    })
-    .from(notes)
-    .leftJoin(classes, eq(notes.classId, classes.id))
-    .leftJoin(subjects, eq(notes.subjectId, subjects.id))
-    .leftJoin(users, eq(notes.uploadedBy, users.id))
-    .orderBy(notes.createdAt);
+  // Fetch all notes with class + subject + uploader and filters in parallel
+  const [rows, allClasses, allSubjects] = await Promise.all([
+    db
+      .select({
+        id: notes.id,
+        title: notes.title,
+        description: notes.description,
+        fileUrl: notes.fileUrl,
+        fileName: notes.fileName,
+        fileType: notes.fileType,
+        fileSize: notes.fileSize,
+        youtubeUrl: notes.youtubeUrl,
+        createdAt: notes.createdAt,
+        classId: notes.classId,
+        className: classes.name,
+        classSection: classes.section,
+        subjectId: notes.subjectId,
+        subjectName: subjects.name,
+        uploaderId: users.id,
+        uploaderName: users.name,
+        uploaderRole: users.role,
+      })
+      .from(notes)
+      .leftJoin(classes, eq(notes.classId, classes.id))
+      .leftJoin(subjects, eq(notes.subjectId, subjects.id))
+      .leftJoin(users, eq(notes.uploadedBy, users.id))
+      .orderBy(notes.createdAt),
+    db
+      .select({ id: classes.id, name: classes.name, section: classes.section })
+      .from(classes)
+      .orderBy(classes.name),
+    db
+      .select({ id: subjects.id, name: subjects.name })
+      .from(subjects)
+      .orderBy(subjects.name),
+  ]);
 
   const noteRows: NoteRow[] = rows.map((r) => ({
     id: r.id,
@@ -147,25 +163,18 @@ export default async function DashboardNotesPage() {
     fileName: r.fileName,
     fileType: r.fileType,
     fileSize: r.fileSize,
+    youtubeUrl: r.youtubeUrl ?? null,
     createdAt: r.createdAt,
     classId: r.classId!,
     className: r.className ?? "Unknown",
     classSection: r.classSection ?? null,
     subjectId: r.subjectId ?? null,
     subjectName: r.subjectName ?? null,
+    uploaderId: r.uploaderId ?? 0,
     uploaderName: r.uploaderName ?? "Unknown",
+    uploaderRole: r.uploaderRole ?? "teacher",
   }));
 
-  // For filters
-  const allClasses = await db
-    .select({ id: classes.id, name: classes.name, section: classes.section })
-    .from(classes)
-    .orderBy(classes.name);
-
-  const allSubjects = await db
-    .select({ id: subjects.id, name: subjects.name })
-    .from(subjects)
-    .orderBy(subjects.name);
 
   return (
     <div className="p-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   FileText,
   Image as ImageIcon,
@@ -11,6 +12,7 @@ import {
   Search,
   BookOpen,
   GraduationCap,
+  Video,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ export interface StudentNoteItem {
   fileName: string;
   fileType: string;
   fileSize?: number | null;
+  youtubeUrl?: string | null;
   createdAt: string;
   subjectId?: number | null;
   subjectName?: string | null;
@@ -41,6 +44,7 @@ interface StudentNotesClientProps {
   className: string;
   studentName: string;
 }
+
 
 function getFileMeta(fileType: string) {
   const t = fileType.toLowerCase();
@@ -248,6 +252,12 @@ export function StudentNotesClient({
                     </div>
 
                     <div className="flex flex-col items-end gap-1">
+                      {note.youtubeUrl && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 border border-red-100">
+                          <Video className="h-3 w-3" />
+                          Video
+                        </span>
+                      )}
                       {note.subjectName && (
                         <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
                           {note.subjectName}
@@ -260,12 +270,17 @@ export function StudentNotesClient({
                   </div>
 
                   {/* Title & Description */}
-                  <h3
-                    className="font-bold text-sm text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors"
-                    title={note.title}
+                  <Link
+                    href={`/dashboard/notes/${note.id}`}
+                    className="block group-hover:text-primary transition-colors"
                   >
-                    {note.title}
-                  </h3>
+                    <h3
+                      className="font-bold text-sm text-foreground line-clamp-2 leading-snug"
+                      title={note.title}
+                    >
+                      {note.title}
+                    </h3>
+                  </Link>
 
                   {note.description && (
                     <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -286,22 +301,21 @@ export function StudentNotesClient({
                     </div>
                   </div>
 
-                  <a
-                    href={note.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={note.fileName}
-                    className="flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-foreground py-2 text-xs font-semibold shadow-xs transition hover:bg-primary/90 active:scale-[0.98]"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    <span>View / Download</span>
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/dashboard/notes/${note.id}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary text-primary-foreground py-2 text-xs font-semibold shadow-xs transition hover:bg-primary/90 active:scale-[0.98]"
+                    >
+                      <span>Study &amp; Ask Teacher</span>
+                    </Link>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
     </div>
   );
 }

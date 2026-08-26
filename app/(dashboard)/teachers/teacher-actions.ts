@@ -36,26 +36,46 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
   }
 
   const { name, email, password, contactNumber, subjectIds = [], joinDate, photoUrl } = parsed.data;
+  const cleanEmail = email.toLowerCase().trim();
 
   try {
+    // Check if email already exists
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, cleanEmail))
+      .limit(1);
+
+    if (existing) {
+      return { success: false, errors: { email: ["Email already exists"] } };
+    }
+
     const hashed = await hash(password, 10);
 
     // neon-http driver doesn't support db.transaction() — insert user first,
     // then compensate by deleting it if the dependent insert fails
     const [user] = await db
       .insert(users)
-      .values({ name, email, password: hashed, contactNumber, role: "teacher", image: photoUrl || null })
+      .values({
+        name,
+        email: cleanEmail,
+        password: hashed,
+        rawPassword: password,
+        contactNumber,
+        role: "teacher",
+        image: photoUrl || null,
+      })
       .returning({ id: users.id });
 
     try {
       const year = new Date().getFullYear();
       await withSequentialCode(
         async () => {
-          const existing = await db.query.teachers.findMany({
+          const existingTeachers = await db.query.teachers.findMany({
             where: like(teachers.teacherId, `${year}-TCH-%`),
             columns: { teacherId: true },
           });
-          const seq = nextSequenceNumber(existing.map((t) => t.teacherId), year, "TCH");
+          const seq = nextSequenceNumber(existingTeachers.map((t) => t.teacherId), year, "TCH");
           return formatSequentialCode(year, "TCH", seq);
         },
         async (teacherId) => {
@@ -89,14 +109,14 @@ export async function createTeacher(formData: unknown): Promise<TeacherActionRes
     return { success: true };
   } catch (err: unknown) {
     console.error("createTeacher failed:", err);
-    if (isPgUniqueViolation(err)) {
-      return { success: false, errors: { email: ["Email already in use"] } };
+    if (isPgUniqueViolation(err) || (err instanceof Error && err.message.toLowerCase().includes("unique constraint"))) {
+      return { success: false, errors: { email: ["Email already exists"] } };
     }
     return { success: false, errors: { root: ["Something went wrong. Try again."] } };
   }
 }
 
-// Updates a teacher's editable fields — name, contact, subjects, and teacher ID.
+// Updates a teacher's editable fields — name, contact, subjects, teacher ID, and credentials.
 export async function updateTeacher(teacherId: number, formData: unknown): Promise<TeacherUpdateActionResult> {
   const parsed = teacherUpdateSchema.safeParse(formData);
   if (!parsed.success) {
@@ -104,6 +124,7 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
   }
 
   const { name, contactNumber, subjectIds = [], teacherId: teacherCode, joinDate, photoUrl, email, password } = parsed.data;
+  const cleanEmail = email.toLowerCase().trim();
 
   try {
     const teacher = await db.query.teachers.findFirst({
@@ -114,12 +135,24 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
       return { success: false, errors: { root: ["Teacher not found."] } };
     }
 
-    const userUpdates: Record<string, any> = { name, contactNumber, email };
+    // Check if another user has this email
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, cleanEmail))
+      .limit(1);
+
+    if (existing && existing.id !== teacher.userId) {
+      return { success: false, errors: { email: ["Email already exists"] } };
+    }
+
+    const userUpdates: Record<string, any> = { name, contactNumber, email: cleanEmail };
     if (photoUrl !== undefined) {
       userUpdates.image = photoUrl || null;
     }
-    if (password && password.length >= 8) {
+    if (password && password.trim() !== "") {
       userUpdates.password = await hash(password, 10);
+      userUpdates.rawPassword = password;
     }
 
     await db.update(users).set(userUpdates).where(eq(users.id, teacher.userId));
@@ -147,8 +180,12 @@ export async function updateTeacher(teacherId: number, formData: unknown): Promi
     revalidatePath("/teachers");
     return { success: true };
   } catch (err: unknown) {
-    if (isPgUniqueViolation(err)) {
-      return { success: false, errors: { teacherId: ["This teacher ID is already in use"] } };
+    if (isPgUniqueViolation(err) || (err instanceof Error && err.message.toLowerCase().includes("unique constraint"))) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("users_email_unique") || message.includes("email")) {
+        return { success: false, errors: { email: ["Email already exists"] } };
+      }
+      return { success: false, errors: { teacherId: ["This teacher ID or email is already in use"] } };
     }
     return { success: false, errors: { root: ["Something went wrong. Try again."] } };
   }

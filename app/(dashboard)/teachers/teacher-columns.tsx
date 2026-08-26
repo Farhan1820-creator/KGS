@@ -8,6 +8,7 @@ export type TeacherRow = {
   id: number;
   name: string;
   email: string;
+  password?: string | null;
   contactNumber: string | null;
   subjectIds: number[];
   subjectNames: string[];

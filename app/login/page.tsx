@@ -5,7 +5,7 @@ import Image from "next/image";
 import { signIn } from "next-auth/react";
 import { registerWebsiteStudent } from "./login-actions";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, BookOpen, GraduationCap } from "lucide-react";
+import { Loader2, Eye, EyeOff, BookOpen, GraduationCap, AlertCircle } from "lucide-react";
 
 type Tab = "login" | "register";
 
@@ -18,61 +18,132 @@ function AuthForm() {
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Register state
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
+  const [regError, setRegError] = useState<string | null>(null);
 
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    setLoginError(null);
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const msg = "Internet connection issue. Please check your network connection.";
+      setLoginError(msg);
+      toast.error(msg);
+      return;
+    }
+
     startTransition(async () => {
-      const res = await signIn("credentials", {
-        email: loginEmail,
-        password: loginPassword,
-        redirect: false,
-      });
-      if (res?.error) {
-        toast.error("Invalid email or password.");
-      } else {
-        // Fallback to /dashboard; middleware will redirect website students to /notes
-        const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-        window.location.href = callbackUrl || "/dashboard";
+      try {
+        const res = await signIn("credentials", {
+          email: loginEmail.trim(),
+          password: loginPassword,
+          redirect: false,
+        });
+
+        if (res?.error) {
+          let errorMsg = "Invalid email or password. Please try again.";
+          if (res.error === "CredentialsSignin" || res.status === 401) {
+            errorMsg = "Incorrect email or password. Please check your credentials.";
+          } else {
+            errorMsg = "Login failed. Please check your credentials or try again later.";
+          }
+          setLoginError(errorMsg);
+          toast.error(errorMsg);
+        } else if (!res?.ok && res?.status && res.status >= 400) {
+          const errorMsg = "Login failed. Please check your credentials or network.";
+          setLoginError(errorMsg);
+          toast.error(errorMsg);
+        } else {
+          // Fallback to /dashboard; middleware will redirect website students to /notes
+          const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+          window.location.href = callbackUrl || "/dashboard";
+        }
+      } catch (err: unknown) {
+        let errorMsg = "Connection error. Please check your internet connection and try again.";
+        if (err instanceof Error && err.message) {
+          if (err.message.includes("fetch") || err.message.includes("network") || err.message.includes("offline")) {
+            errorMsg = "Internet connection issue. Please check your network connection.";
+          }
+        }
+        setLoginError(errorMsg);
+        toast.error(errorMsg);
       }
     });
   }
 
   function handleGoogleLogin() {
+    setLoginError(null);
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const msg = "Internet connection issue. Please check your network connection.";
+      setLoginError(msg);
+      toast.error(msg);
+      return;
+    }
     startTransition(async () => {
-      const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
-      await signIn("google", { callbackUrl: callbackUrl || "/dashboard" });
+      try {
+        const callbackUrl = new URLSearchParams(window.location.search).get("callbackUrl");
+        await signIn("google", { callbackUrl: callbackUrl || "/dashboard" });
+      } catch (err) {
+        const msg = "Google sign-in failed. Please check your internet connection.";
+        setLoginError(msg);
+        toast.error(msg);
+      }
     });
   }
 
   function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    setRegError(null);
+
     if (regPassword !== regConfirm) {
-      toast.error("Passwords do not match.");
+      const msg = "Passwords do not match.";
+      setRegError(msg);
+      toast.error(msg);
       return;
     }
+
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const msg = "Internet connection issue. Please check your network connection.";
+      setRegError(msg);
+      toast.error(msg);
+      return;
+    }
+
     startTransition(async () => {
-      const res = await registerWebsiteStudent(regName, regEmail, regPassword);
-      if (!res.success) {
-        toast.error(res.error);
-      } else {
-        // Sign in after registration
-        const signInRes = await signIn("credentials", {
-          email: regEmail,
-          password: regPassword,
-          redirect: false,
-        });
-        if (signInRes?.error) {
-          toast.error("Registered but couldn't log in. Please use the Login tab.");
-          setTab("login");
+      try {
+        const res = await registerWebsiteStudent(regName, regEmail, regPassword);
+        if (!res.success) {
+          setRegError(res.error);
+          toast.error(res.error);
         } else {
-          window.location.href = "/onboarding";
+          // Sign in after registration
+          const signInRes = await signIn("credentials", {
+            email: regEmail.trim(),
+            password: regPassword,
+            redirect: false,
+          });
+          if (signInRes?.error) {
+            toast.error("Registered but couldn't log in. Please use the Login tab.");
+            setTab("login");
+          } else {
+            window.location.href = "/onboarding";
+          }
         }
+      } catch (err: unknown) {
+        let errorMsg = "Registration failed. Please check your connection and try again.";
+        if (err instanceof Error && err.message) {
+          if (err.message.includes("fetch") || err.message.includes("network") || err.message.includes("offline")) {
+            errorMsg = "Internet connection issue. Please check your network connection.";
+          }
+        }
+        setRegError(errorMsg);
+        toast.error(errorMsg);
       }
     });
   }
@@ -117,6 +188,13 @@ function AuthForm() {
           {/* ── LOGIN TAB ── */}
           {tab === "login" && (
             <form onSubmit={handleLogin} className="space-y-4">
+              {loginError && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm animate-in fade-in-50 duration-200">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                  <div className="flex-1 font-medium">{loginError}</div>
+                </div>
+              )}
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
                 <input
@@ -195,6 +273,13 @@ function AuthForm() {
           {/* ── REGISTER TAB ── */}
           {tab === "register" && (
             <form onSubmit={handleRegister} className="space-y-4">
+              {regError && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 shadow-sm animate-in fade-in-50 duration-200">
+                  <AlertCircle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                  <div className="flex-1 font-medium">{regError}</div>
+                </div>
+              )}
+
               <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-700 border border-blue-100">
                 <GraduationCap size={20} className="shrink-0" />
                 <p><strong>Note:</strong> Registration is only for students seeking access to online notes.</p>

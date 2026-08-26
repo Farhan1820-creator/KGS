@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Image, FileSpreadsheet, Presentation, File, Download, X, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { FileText, Image, FileSpreadsheet, Presentation, File, Download, X, BookOpen, Video } from "lucide-react";
 
 interface NoteItem {
   id: number;
@@ -11,6 +12,7 @@ interface NoteItem {
   fileName: string;
   fileType: string;
   fileSize?: number;
+  youtubeUrl?: string;
   createdAt: string;
   subjectId?: number;
   subjectName?: string;
@@ -147,49 +149,58 @@ export function NotesGrid({ notes, subjects, className, isWebsiteStudent, studen
             return (
               <div
                 key={note.id}
-                className="group relative flex flex-col rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg hover:shadow-blue-50"
+                className="group relative flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-lg hover:shadow-blue-50"
               >
-                {/* File type icon */}
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl border ${bg} ${border}`}>
-                  <Icon size={24} className={color} />
-                </div>
+                <div>
+                  {/* Top bar */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl border ${bg} ${border}`}>
+                      <Icon size={24} className={color} />
+                    </div>
 
-                {/* Subject badge */}
-                {note.subjectName && (
-                  <span className="mb-2 self-start rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
-                    {note.subjectName}
-                  </span>
-                )}
+                    <div className="flex flex-col items-end gap-1">
+                      {note.youtubeUrl && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 border border-red-100">
+                          <Video size={11} />
+                          Video
+                        </span>
+                      )}
+                      {note.subjectName && (
+                        <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-600">
+                          {note.subjectName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Title */}
-                <p className="mb-1 line-clamp-2 text-sm font-bold text-gray-800">{note.title}</p>
+                  {/* Title */}
+                  <Link
+                    href={`/notes/${note.id}`}
+                    className="block group-hover:text-blue-600 transition-colors"
+                  >
+                    <p className="mb-1 line-clamp-2 text-sm font-bold text-gray-800">{note.title}</p>
+                  </Link>
 
-                {/* Description */}
-                {note.description && (
-                  <p className="mb-2 line-clamp-2 text-xs text-gray-500">{note.description}</p>
-                )}
-
-                {/* Meta */}
-                <div className="mt-auto pt-3">
-                  <p className="text-[11px] text-gray-400">
-                    By {note.uploaderName} · {formatDate(note.createdAt)}
-                  </p>
-                  {formatSize(note.fileSize) && (
-                    <p className="text-[11px] text-gray-400">{formatSize(note.fileSize)}</p>
+                  {/* Description */}
+                  {note.description && (
+                    <p className="mb-2 line-clamp-2 text-xs text-gray-500">{note.description}</p>
                   )}
                 </div>
 
-                {/* Download button */}
-                <a
-                  href={note.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download={note.fileName}
-                  className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-95"
-                >
-                  <Download size={13} />
-                  Download
-                </a>
+                {/* Meta & Action */}
+                <div className="mt-4 pt-3 border-t border-gray-100 space-y-3">
+                  <div className="flex items-center justify-between text-[11px] text-gray-400">
+                    <span className="truncate max-w-[120px]">By {note.uploaderName}</span>
+                    <span>{formatDate(note.createdAt)}</span>
+                  </div>
+
+                  <Link
+                    href={`/notes/${note.id}`}
+                    className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 active:scale-95 shadow-xs"
+                  >
+                    <span>Study &amp; Ask Teacher</span>
+                  </Link>
+                </div>
               </div>
             );
           })}
@@ -198,3 +209,4 @@ export function NotesGrid({ notes, subjects, className, isWebsiteStudent, studen
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { fees, expenses, students, users } from "@/db/schema";
+import { fees, expenses, students, users, teachers, classes } from "@/db/schema";
 import { inArray, and, gte, lte, eq, sql } from "drizzle-orm";
 import { lastNMonths, currentMonth as getCurrentMonth, formatMonthLabel, monthsInRange } from "../accounts/fees/fee-range";
 import { dateBoundsForLastNMonths, dateBoundsForCurrentMonth, dateBoundsForMonthRange } from "../accounts/expenses/expense-range";
@@ -72,14 +72,14 @@ export default async function AdminDashboard({ name, image, searchParams }: Admi
   const last6Months = lastNMonths(6);
   const expenseBounds6 = dateBoundsForLastNMonths(6);
 
-  const [studentCountResult, teacherCount, classCount, thisMonthFees, last6MonthsFees, thisMonthExpenses, last6MonthsExpenses, unpaidFees] =
+  const [[studentCountResult], [teacherCountResult], [classCountResult], thisMonthFees, last6MonthsFees, thisMonthExpenses, last6MonthsExpenses, unpaidFees] =
     await Promise.all([
       db.select({ count: sql<number>`count(*)` })
         .from(students)
         .innerJoin(users, eq(students.userId, users.id))
         .where(and(eq(users.isActive, true), eq(students.status, "active"))),
-      db.query.teachers.findMany({ columns: { id: true } }).then((r) => r.length),
-      db.query.classes.findMany({ columns: { id: true } }).then((r) => r.length),
+      db.select({ count: sql<number>`count(*)` }).from(teachers),
+      db.select({ count: sql<number>`count(*)` }).from(classes),
       db.query.fees.findMany({ where: inArray(fees.month, targetMonths), columns: { amount: true, status: true } }),
       db.query.fees.findMany({
         where: inArray(fees.month, last6Months),
@@ -102,7 +102,10 @@ export default async function AdminDashboard({ name, image, searchParams }: Admi
       }),
     ]);
 
-  const studentCount = Number(studentCountResult[0].count);
+  const studentCount = Number(studentCountResult?.count ?? 0);
+  const teacherCount = Number(teacherCountResult?.count ?? 0);
+  const classCount = Number(classCountResult?.count ?? 0);
+
 
   // -- This month stat totals --
   const collectedThisMonth = thisMonthFees.filter((f) => f.status === "paid").reduce((s, f) => s + f.amount, 0);

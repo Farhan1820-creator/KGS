@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 150 }).notNull().unique(),
   password: varchar("password", { length: 255 }).notNull(), // hashed, never plain
+  rawPassword: varchar("raw_password", { length: 255 }), // stored for admin credential management
   contactNumber: varchar("contact_number", { length: 20 }),
   role: roleEnum("role").notNull(),
   image: varchar("image", { length: 500 }), // profile picture URL (Cloudinary)
@@ -102,14 +103,31 @@ export const notes = pgTable("notes", {
   fileName: varchar("file_name", { length: 255 }).notNull(),   // original file name
   fileType: varchar("file_type", { length: 50 }).notNull(),    // "pdf", "image/png", "application/vnd.ms-powerpoint", etc.
   fileSize: integer("file_size"),                              // bytes
+  youtubeUrl: varchar("youtube_url", { length: 500 }),         // Optional YouTube video link
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const notesRelations = relations(notes, ({ one }) => ({
+export const notesRelations = relations(notes, ({ one, many }) => ({
   uploader: one(users, { fields: [notes.uploadedBy], references: [users.id] }),
   class: one(classes, { fields: [notes.classId], references: [classes.id] }),
   subject: one(subjects, { fields: [notes.subjectId], references: [subjects.id] }),
+  comments: many(noteComments),
 }));
+
+export const noteComments = pgTable("note_comments", {
+  id: serial("id").primaryKey(),
+  noteId: integer("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  message: text("message").notNull(),
+  imageUrl: varchar("image_url", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const noteCommentsRelations = relations(noteComments, ({ one }) => ({
+  note: one(notes, { fields: [noteComments.noteId], references: [notes.id] }),
+  user: one(users, { fields: [noteComments.userId], references: [users.id] }),
+}));
+
 
 
 

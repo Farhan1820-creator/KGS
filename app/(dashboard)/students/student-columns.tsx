@@ -9,6 +9,7 @@ export type StudentRow = {
   id: number;
   name: string;
   email: string;
+  password?: string | null;
   contactNumber: string | null;
   classId: number | null;
   className: string | null;

@@ -40,33 +40,35 @@ export default async function NotesPortalPage() {
 
   const classId = student.classId;
 
-  // Fetch class info
-  const [classInfo] = await db
-    .select({ name: classes.name, section: classes.section })
-    .from(classes)
-    .where(eq(classes.id, classId))
-    .limit(1);
+  // Fetch class info and notes in parallel
+  const [[classInfo], notesRows] = await Promise.all([
+    db
+      .select({ name: classes.name, section: classes.section })
+      .from(classes)
+      .where(eq(classes.id, classId))
+      .limit(1),
+    db
+      .select({
+        id: notes.id,
+        title: notes.title,
+        description: notes.description,
+        fileUrl: notes.fileUrl,
+        fileName: notes.fileName,
+        fileType: notes.fileType,
+        fileSize: notes.fileSize,
+        youtubeUrl: notes.youtubeUrl,
+        createdAt: notes.createdAt,
+        subjectId: notes.subjectId,
+        subjectName: subjects.name,
+        uploaderName: users.name,
+      })
+      .from(notes)
+      .leftJoin(subjects, eq(notes.subjectId, subjects.id))
+      .leftJoin(users, eq(notes.uploadedBy, users.id))
+      .where(eq(notes.classId, classId))
+      .orderBy(notes.createdAt),
+  ]);
 
-  // Fetch notes for this class with uploader + subject info
-  const notesRows = await db
-    .select({
-      id: notes.id,
-      title: notes.title,
-      description: notes.description,
-      fileUrl: notes.fileUrl,
-      fileName: notes.fileName,
-      fileType: notes.fileType,
-      fileSize: notes.fileSize,
-      createdAt: notes.createdAt,
-      subjectId: notes.subjectId,
-      subjectName: subjects.name,
-      uploaderName: users.name,
-    })
-    .from(notes)
-    .leftJoin(subjects, eq(notes.subjectId, subjects.id))
-    .leftJoin(users, eq(notes.uploadedBy, users.id))
-    .where(eq(notes.classId, classId))
-    .orderBy(notes.createdAt);
 
   // Unique subjects for filter pills
   const subjectOptions = Array.from(
@@ -139,6 +141,7 @@ export default async function NotesPortalPage() {
             fileName: n.fileName,
             fileType: n.fileType,
             fileSize: n.fileSize ?? undefined,
+            youtubeUrl: n.youtubeUrl ?? undefined,
             createdAt: n.createdAt.toISOString(),
             subjectId: n.subjectId ?? undefined,
             subjectName: n.subjectName ?? undefined,
@@ -153,3 +156,4 @@ export default async function NotesPortalPage() {
     </div>
   );
 }
+

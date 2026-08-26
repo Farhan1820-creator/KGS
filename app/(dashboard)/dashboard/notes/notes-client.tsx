@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { NoteUploadDialog } from "./note-upload-dialog";
 import { deleteNote, type NoteRow } from "./notes-actions";
 import { toast } from "sonner";
-import { FileText, Image, FileSpreadsheet, Presentation, File, Trash2, Plus, Search, Filter } from "lucide-react";
+import { FileText, Image, FileSpreadsheet, Presentation, File, Trash2, Plus, Search, Filter, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 function fileIcon(fileType: string) {
   const t = fileType.toLowerCase();
@@ -145,63 +147,94 @@ export function NotesClient({ initialNotes, classes, subjects, role, userId }: P
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((note) => {
             const { Icon, color, bg } = fileIcon(note.fileType);
-            const canDelete = role === "admin" || note.uploaderName === note.uploaderName; // simplified — server enforces
+            const canDelete = role === "admin" || note.uploaderId === userId;
             return (
-              <div key={note.id} className="group relative flex flex-col rounded-xl border bg-card p-5 shadow-sm transition hover:shadow-md">
-                {/* Icon */}
-                <div className={`mb-3 inline-flex h-11 w-11 items-center justify-center rounded-xl ${bg}`}>
-                  <Icon size={22} className={color} />
-                </div>
+              <div
+                key={note.id}
+                className="group relative flex flex-col justify-between rounded-2xl border border-muted/60 bg-card p-5 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30"
+              >
+                <div>
+                  {/* Top Bar with Icon + Badges */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${bg}`}>
+                      <Icon size={22} className={color} />
+                    </div>
 
-                {/* Class + Subject badges */}
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-600">
-                    {note.className}{note.classSection ? ` – ${note.classSection}` : ""}
-                  </span>
-                  {note.subjectName && (
-                    <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold text-indigo-600">
-                      {note.subjectName}
+                    <div className="flex flex-col items-end gap-1">
+                      {note.youtubeUrl && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-600 border border-red-100">
+                          <Video size={11} />
+                          Video
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Class + Subject badges */}
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-600">
+                      {note.className}{note.classSection ? ` – ${note.classSection}` : ""}
                     </span>
+                    {note.subjectName && (
+                      <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold text-indigo-600">
+                        {note.subjectName}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <Link
+                    href={`/dashboard/notes/${note.id}`}
+                    className="block group-hover:text-primary transition-colors"
+                  >
+                    <p className="mb-1 line-clamp-2 text-sm font-bold text-foreground">{note.title}</p>
+                  </Link>
+
+                  {note.description && (
+                    <p className="mb-2 line-clamp-2 text-xs text-muted-foreground">{note.description}</p>
                   )}
                 </div>
 
-                {/* Title */}
-                <p className="mb-1 line-clamp-2 text-sm font-bold text-foreground">{note.title}</p>
-                {note.description && (
-                  <p className="mb-2 line-clamp-1 text-xs text-muted-foreground">{note.description}</p>
-                )}
+                {/* Meta & Actions */}
+                <div className="mt-4 pt-3 border-t border-muted/50">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-3">
+                    <span className="truncate max-w-[120px]" title={note.uploaderName}>
+                      By {note.uploaderName}
+                    </span>
+                    <span>{formatDate(note.createdAt)}</span>
+                  </div>
 
-                {/* Meta */}
-                <div className="mt-auto pt-3 text-[11px] text-muted-foreground">
-                  <p>By {note.uploaderName}</p>
-                  <p>{formatDate(note.createdAt)}</p>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/dashboard/notes/${note.id}`}
+                      className="flex-1 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white py-2 text-center text-xs font-semibold transition-all shadow-2xs"
+                    >
+                      View &amp; Discuss
+                    </Link>
 
-                {/* Actions */}
-                <div className="mt-3 flex gap-2">
-                  <a
-                    href={note.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 rounded-lg border py-1.5 text-center text-xs font-medium transition hover:bg-accent"
-                  >
-                    View / Download
-                  </a>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={isPending}
-                    onClick={() => handleDelete(note.id)}
-                    className="h-8 w-8 flex-shrink-0 p-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 size={14} />
-                  </Button>
+                    {canDelete && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(note.id);
+                        }}
+                        className="h-8 w-8 flex-shrink-0 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                        title="Delete note"
+                      >
+                        <Trash2 size={14} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
       )}
+
 
       <NoteUploadDialog
         open={dialogOpen}

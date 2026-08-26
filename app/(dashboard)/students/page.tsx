@@ -38,6 +38,7 @@ export default async function StudentsPage() {
     id: s.id,
     name: s.user.name,
     email: s.user.email,
+    password: s.user.rawPassword ?? s.user.contactNumber ?? "",
     contactNumber: s.user.contactNumber,
     classId: s.classId,
     className: s.class?.name ?? "—",

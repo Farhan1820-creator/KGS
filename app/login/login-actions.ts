@@ -41,6 +41,7 @@ export async function registerWebsiteStudent(
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password: hashed,
+      rawPassword: password,
       role: "student",
     })
     .returning({ id: users.id });

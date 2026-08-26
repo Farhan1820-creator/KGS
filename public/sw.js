@@ -12,7 +12,22 @@ self.addEventListener("push", function (event) {
         link: data.link || "/",
       },
     };
-    event.waitUntil(self.registration.showNotification(data.title, options));
+    event.waitUntil(
+      Promise.all([
+        self.registration.showNotification(data.title, options),
+        (async () => {
+          try {
+            if (typeof BroadcastChannel !== "undefined") {
+              const channel = new BroadcastChannel("notifications_channel");
+              channel.postMessage({ type: "NEW_NOTIFICATION", payload: data });
+              channel.close();
+            }
+          } catch (e) {
+            // Ignore channel errors
+          }
+        })(),
+      ])
+    );
   }
 });
 

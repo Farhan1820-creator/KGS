@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Upload, FileText, Image, File, X, CloudUpload } from "lucide-react";
+import { Loader2, Upload, FileText, Image, File, X, CloudUpload, Video } from "lucide-react";
 import { uploadToCloudinary } from "@/lib/cloudinary-upload";
 import { uploadNote } from "./notes-actions";
 
@@ -37,6 +37,7 @@ export function NoteUploadDialog({ open, onOpenChange, onSaved, classes, subject
   const [description, setDescription] = useState("");
   const [classId, setClassId] = useState("");
   const [subjectId, setSubjectId] = useState("");
+  const [youtubeUrl, setYoutubeUrl] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -48,6 +49,7 @@ export function NoteUploadDialog({ open, onOpenChange, onSaved, classes, subject
     setDescription("");
     setClassId("");
     setSubjectId("");
+    setYoutubeUrl("");
     setSelectedFile(null);
     setUploadProgress(0);
   }
@@ -87,6 +89,7 @@ export function NoteUploadDialog({ open, onOpenChange, onSaved, classes, subject
           fileName: selectedFile.name,
           fileType: selectedFile.type || result.fileType,
           fileSize: selectedFile.size,
+          youtubeUrl: youtubeUrl.trim() || undefined,
         });
 
         toast.dismiss("note-upload");
@@ -107,6 +110,7 @@ export function NoteUploadDialog({ open, onOpenChange, onSaved, classes, subject
       }
     });
   }
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
@@ -230,8 +234,26 @@ export function NoteUploadDialog({ open, onOpenChange, onSaved, classes, subject
             </div>
           </div>
 
+          {/* YouTube Video URL (Optional) */}
+          <div>
+            <Label className="flex items-center gap-1.5">
+              <Video size={14} className="text-red-500" />
+              <span>YouTube Video Lecture URL <span className="text-gray-400 text-xs">(optional)</span></span>
+            </Label>
+            <Input
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="e.g. https://www.youtube.com/watch?v=... or https://youtu.be/..."
+              className="mt-1"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Link a YouTube video lecture so students can watch and learn directly on the note page.
+            </p>
+          </div>
+
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-2">
+
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

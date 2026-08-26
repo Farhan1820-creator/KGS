@@ -35,9 +35,13 @@ export default async function FeesPage({ searchParams }: FeesPageProps) {
       orderBy: (t, { asc }) => [asc(t.id)],
     }),
     db.query.classes.findMany({ orderBy: (t, { desc }) => [desc(t.id)] }),
-    db.query.students.findMany({ with: { user: true } }),
+    db.query.students.findMany({
+      columns: { id: true },
+      with: { user: { columns: { name: true } } },
+    }),
     db.query.feeStructures.findMany(),
   ]);
+
 
   let data: FeeRow[] = feeRows.map((f) => ({
     id: f.id,

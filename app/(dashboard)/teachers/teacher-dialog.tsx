@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Eye, EyeOff } from "lucide-react";
 import type { TeacherRow } from "./teacher-columns";
 import { PhotoUploadSquare } from "@/components/layout/photo-upload-square";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
@@ -70,6 +70,8 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [removingPhoto, setRemovingPhoto] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showViewPassword, setShowViewPassword] = useState(false);
 
   const {
     register,
@@ -106,11 +108,13 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
   useEffect(() => {
     if (!open) return;
     setMode(isCreate ? "create" : initialMode);
+    setShowPassword(false);
+    setShowViewPassword(false);
     if (teacher) {
       reset({
         name: teacher.name,
         email: teacher.email || "",
-        password: "",
+        password: teacher.password || "",
         contactNumber: teacher.contactNumber ?? "",
         subjectIds: teacher.subjectIds ?? [],
         teacherId: teacher.teacherId ?? "",
@@ -181,7 +185,8 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
         setError(key as keyof TeacherAnyFormValues, { message: (msgs as string[] | undefined)?.[0] });
       });
-      toast.error(res.errors?.root?.[0] ?? "Please fix the errors and try again");
+      const errorMsg = res.errors?.email?.[0] || res.errors?.teacherId?.[0] || res.errors?.root?.[0] || "Please fix the errors and try again";
+      toast.error(errorMsg);
       return;
     }
 
@@ -232,6 +237,24 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
                 <Field label="Full Name" value={teacher.name} />
                 <Field label="Teacher ID" value={teacher.teacherId ?? ""} />
                 <Field label="Email" value={teacher.email} />
+                <div>
+                  <p className="text-xs text-muted-foreground">Password</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="font-medium font-mono text-sm">
+                      {showViewPassword ? (teacher.password || "—") : (teacher.password ? "••••••••" : "—")}
+                    </p>
+                    {teacher.password && (
+                      <button
+                        type="button"
+                        onClick={() => setShowViewPassword(!showViewPassword)}
+                        className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors"
+                        title={showViewPassword ? "Hide password" : "Show password"}
+                      >
+                        {showViewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <Field label="Contact Number" value={teacher.contactNumber ?? ""} />
                 <div className="sm:col-span-2">
                   <p className="text-xs text-muted-foreground">Assigned Subject(s)</p>
@@ -286,14 +309,24 @@ export function TeacherDialog({ open, onOpenChange, subjects, onSaved, teacher, 
 
                   <div className="space-y-1">
                     <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      autoComplete="new-password"
-                      data-lpignore="true"
-                      placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"}
-                      {...register("password")}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        placeholder="Min. 6 characters"
+                        className="pr-10"
+                        {...register("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                     {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
                   </div>
 

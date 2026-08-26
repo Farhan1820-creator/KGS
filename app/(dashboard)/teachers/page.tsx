@@ -38,6 +38,7 @@ export default async function TeachersPage() {
       id: t.id,
       name: t.user.name,
       email: t.user.email,
+      password: t.user.rawPassword ?? t.user.contactNumber ?? "",
       contactNumber: t.user.contactNumber,
       subjectIds,
       subjectNames,

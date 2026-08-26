@@ -16,46 +16,45 @@ export default async function TestReportsPage() {
   const role = session.user.role;
   if (!["admin", "teacher"].includes(role)) redirect("/dashboard");
 
-  // Fetch classes
-  const allClasses = await db
-    .select({ id: classes.id, name: classes.name, section: classes.section })
-    .from(classes)
-    .orderBy(classes.name);
-
-  // Fetch active students
-  const activeStudents = await db
-    .select({ id: students.id, name: users.name, classId: students.classId })
-    .from(students)
-    .innerJoin(users, eq(students.userId, users.id))
-    .where(eq(students.status, "active"))
-    .orderBy(users.name);
-
   const creatorAlias = alias(users, "creator");
 
-  // Fetch test marks
-  const rows = await db
-    .select({
-      id: testMarks.id,
-      studentId: testMarks.studentId,
-      studentName: users.name,
-      classId: testMarks.classId,
-      className: classes.name,
-      classSection: classes.section,
-      title: testMarks.title,
-      month: testMarks.month,
-      totalMarks: testMarks.totalMarks,
-      achievedMarks: testMarks.achievedMarks,
-      percentage: testMarks.percentage,
-      createdAt: testMarks.createdAt,
-      creatorName: creatorAlias.name,
-    })
-    .from(testMarks)
-    .innerJoin(students, eq(testMarks.studentId, students.id))
-    .innerJoin(users, eq(students.userId, users.id))
-    .innerJoin(classes, eq(testMarks.classId, classes.id))
-    .leftJoin(creatorAlias, eq(testMarks.createdBy, creatorAlias.id))
-    .where(eq(students.status, "active"))
-    .orderBy(testMarks.createdAt);
+  // Fetch classes, active students, and test marks in parallel
+  const [allClasses, activeStudents, rows] = await Promise.all([
+    db
+      .select({ id: classes.id, name: classes.name, section: classes.section })
+      .from(classes)
+      .orderBy(classes.name),
+    db
+      .select({ id: students.id, name: users.name, classId: students.classId })
+      .from(students)
+      .innerJoin(users, eq(students.userId, users.id))
+      .where(eq(students.status, "active"))
+      .orderBy(users.name),
+    db
+      .select({
+        id: testMarks.id,
+        studentId: testMarks.studentId,
+        studentName: users.name,
+        classId: testMarks.classId,
+        className: classes.name,
+        classSection: classes.section,
+        title: testMarks.title,
+        month: testMarks.month,
+        totalMarks: testMarks.totalMarks,
+        achievedMarks: testMarks.achievedMarks,
+        percentage: testMarks.percentage,
+        createdAt: testMarks.createdAt,
+        creatorName: creatorAlias.name,
+      })
+      .from(testMarks)
+      .innerJoin(students, eq(testMarks.studentId, students.id))
+      .innerJoin(users, eq(students.userId, users.id))
+      .innerJoin(classes, eq(testMarks.classId, classes.id))
+      .leftJoin(creatorAlias, eq(testMarks.createdBy, creatorAlias.id))
+      .where(eq(students.status, "active"))
+      .orderBy(testMarks.createdAt),
+  ]);
+
 
   const initialMarks: TestMarkRow[] = rows.map((r) => ({
     id: r.id,

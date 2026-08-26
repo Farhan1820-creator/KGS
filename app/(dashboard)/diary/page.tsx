@@ -21,27 +21,53 @@ export default async function DiaryPage({ searchParams }: DiaryPageProps) {
   const role = session.user.role as "student" | "teacher" | "admin";
   const userId = Number(session.user.id);
 
-  const allClasses = await db.query.classes.findMany();
+  let activeClassId = classIdParam ?? "";
+  let allClasses: { id: number; name: string; section: string | null }[] = [];
+  let entriesRaw: any[] = [];
 
-  // students are locked to their own class — no dropdown, no param override
-  let activeClassId: string;
   if (role === "student") {
-    const [studentRow] = await db.select().from(students).where(eq(students.userId, userId)).limit(1);
+    const [classesData, [studentRow]] = await Promise.all([
+      db.query.classes.findMany(),
+      db.select({ classId: students.classId }).from(students).where(eq(students.userId, userId)).limit(1),
+    ]);
+    allClasses = classesData;
+
     if (!studentRow?.classId) {
       return <div className="page-shell">You are not assigned to a class yet.</div>;
     }
     activeClassId = String(studentRow.classId);
-  } else {
-    activeClassId = classIdParam ?? (allClasses[0] ? String(allClasses[0].id) : "");
-  }
 
-  const entriesRaw = activeClassId
-    ? await db.query.diaryEntries.findMany({
+    entriesRaw = await db.query.diaryEntries.findMany({
+      where: eq(diaryEntries.classId, Number(activeClassId)),
+      with: { sender: true },
+      orderBy: (entry, { asc }) => [asc(entry.createdAt)],
+    });
+  } else {
+    const defaultQueryId = classIdParam ? Number(classIdParam) : null;
+    const [classesData, initialEntries] = await Promise.all([
+      db.query.classes.findMany(),
+      defaultQueryId
+        ? db.query.diaryEntries.findMany({
+            where: eq(diaryEntries.classId, defaultQueryId),
+            with: { sender: true },
+            orderBy: (entry, { asc }) => [asc(entry.createdAt)],
+          })
+        : Promise.resolve([]),
+    ]);
+    allClasses = classesData;
+    activeClassId = classIdParam ?? (allClasses[0] ? String(allClasses[0].id) : "");
+
+    if (!classIdParam && activeClassId) {
+      entriesRaw = await db.query.diaryEntries.findMany({
         where: eq(diaryEntries.classId, Number(activeClassId)),
         with: { sender: true },
         orderBy: (entry, { asc }) => [asc(entry.createdAt)],
-      })
-    : [];
+      });
+    } else {
+      entriesRaw = initialEntries;
+    }
+  }
+
 
   const entries: DiaryEntryRow[] = entriesRaw.map((e) => ({
     id: e.id,

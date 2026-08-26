@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil } from "lucide-react";
+import { Pencil, Eye, EyeOff } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -95,6 +95,8 @@ export function StudentDialog({
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [removingPhoto, setRemovingPhoto] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showViewPassword, setShowViewPassword] = useState(false);
 
   const {
     register,
@@ -132,11 +134,13 @@ export function StudentDialog({
   useEffect(() => {
     if (!open) return;
     setMode(isCreate ? "create" : initialMode);
+    setShowPassword(false);
+    setShowViewPassword(false);
     if (student) {
       reset({
         name: student.name,
         email: student.email || "",
-          password: "",
+        password: student.password || "",
         contactNumber: student.contactNumber ?? "",
         classId: student.classId ? String(student.classId) : "",
         rollNumber: student.rollNumber ?? "",
@@ -227,7 +231,8 @@ export function StudentDialog({
       Object.entries(res.errors ?? {}).forEach(([key, msgs]) => {
         setError(key as keyof StudentAnyFormValues, { message: (msgs as string[] | undefined)?.[0] });
       });
-      toast.error(res.errors?.root?.[0] ?? "Please fix the errors and try again");
+      const errorMsg = res.errors?.email?.[0] || res.errors?.root?.[0] || "Please fix the errors and try again";
+      toast.error(errorMsg);
       return;
     }
 
@@ -276,6 +281,24 @@ export function StudentDialog({
                 <Field label="Full Name" value={student.name} />
                 <Field label="Roll Number" value={student.rollNumber ?? ""} />
                 <Field label="Email" value={student.email} />
+                <div>
+                  <p className="text-xs text-muted-foreground">Password</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="font-medium font-mono text-sm">
+                      {showViewPassword ? (student.password || "—") : (student.password ? "••••••••" : "—")}
+                    </p>
+                    {student.password && (
+                      <button
+                        type="button"
+                        onClick={() => setShowViewPassword(!showViewPassword)}
+                        className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors"
+                        title={showViewPassword ? "Hide password" : "Show password"}
+                      >
+                        {showViewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <Field label="Contact Number" value={student.contactNumber ?? ""} />
                 <Field label="Class" value={student.className ?? ""} />
                 <Field label="School Name" value={student.schoolName ?? "Not specified"} />
@@ -313,7 +336,7 @@ export function StudentDialog({
                     {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
-                                                        <div className="space-y-1">
+                  <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
                     {mode === "create" ? (
                       <div className="flex items-center h-10">
@@ -336,11 +359,28 @@ export function StudentDialog({
                     )}
                     {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
                   </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" autoComplete="new-password" data-lpignore="true" placeholder={mode === "edit" ? "Leave blank to keep unchanged" : "Min. 8 characters"} {...register("password")} />
-                      {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                  <div className="space-y-1">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        data-lpignore="true"
+                        placeholder="Min. 6 characters"
+                        className="pr-10"
+                        {...register("password")}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
                     </div>
+                    {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
+                  </div>
 
                   <div className="space-y-1">
                     <Label htmlFor="contactNumber">Contact number</Label>

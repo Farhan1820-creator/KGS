@@ -37,7 +37,12 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
   // before we read attendance for this page (see attendance-actions.ts).
   await autoCloseStaleAttendance();
 
-  const scheduleRows = await db.query.workSchedules.findMany({ with: { days: true } });
+  const [scheduleRows, offDateRows, calendarSyncUrl] = await Promise.all([
+    db.query.workSchedules.findMany({ with: { days: true } }),
+    db.query.offDates.findMany(),
+    getCalendarSyncUrl(),
+  ]);
+
   const schedules: WorkSchedule[] = scheduleRows.map((r) => ({
     id: r.id,
     effectiveFrom: r.effectiveFrom,
@@ -47,15 +52,14 @@ export default async function PayrollPage({ searchParams }: PayrollPageProps) {
     days: r.days.map((d) => ({ dayOfWeek: d.dayOfWeek, startTime: d.startTime, endTime: d.endTime })),
   }));
 
-  const offDateRows = await db.query.offDates.findMany();
   const offDatesList = offDateRows.map((d) => d.date);
   const offDatesForUi = offDateRows.map((d) => ({ date: d.date, label: d.label, source: d.source }));
-  const calendarSyncUrl = await getCalendarSyncUrl();
 
   const y = parseInt(month.slice(0, 4), 10);
   const m = parseInt(month.slice(5, 7), 10);
   const nextMonthStart = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, "0")}-01`;
   const monthStart = `${month}-01`;
+
 
   let attendanceContent: ReactNode;
   let payrollContent: ReactNode;
