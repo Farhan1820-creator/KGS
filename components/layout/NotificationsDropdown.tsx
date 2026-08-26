@@ -338,7 +338,7 @@ export function NotificationsDropdown() {
       </Button>
 
       {open && (
-        <div className="fixed left-1/2 -translate-x-1/2 top-16 w-[calc(100vw-2rem)] max-w-sm sm:absolute sm:top-full sm:left-auto sm:right-0 sm:translate-x-0 sm:mt-3 sm:w-96 bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden origin-top animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
+        <div className="fixed inset-x-3 top-16 mx-auto w-[calc(100vw-1.5rem)] max-w-sm sm:max-w-none sm:w-96 sm:absolute sm:top-full sm:inset-x-auto sm:right-0 sm:translate-x-0 sm:mx-0 sm:mt-3 bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-2xl z-50 overflow-hidden origin-top animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
           {/* Notification Header / Bar */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-white">
             <div className="flex items-center gap-2">
