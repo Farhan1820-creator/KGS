@@ -34,12 +34,13 @@ export async function createDiaryEntry(formData: unknown) {
     return { success: false as const, errors: parsed.error.flatten().fieldErrors as DiaryFieldErrors };
   }
 
-  const { classId, message, fileUrl, fileName, fileType } = parsed.data;
+  const { classId, studentId, message, fileUrl, fileName, fileType } = parsed.data;
 
   try {
     await db.insert(diaryEntries).values({
       senderId: Number(user.id),
       classId: Number(classId),
+      studentId: studentId ? Number(studentId) : null,
       message: message?.trim() || null,
       fileUrl: fileUrl || null,
       fileName: fileName || null,

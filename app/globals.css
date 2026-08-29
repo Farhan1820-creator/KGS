@@ -90,12 +90,20 @@ body {
    was throwing "unknown utility class" here. */
 .page-shell {
   width: 100%;
-  max-width: 96rem; /* max-w-screen-2xl — a bit roomier than max-w-7xl */
+  max-width: 120rem; /* max-w-screen-2xl — a bit roomier than max-w-7xl */
   margin-inline: auto;
   padding-inline: 1rem; /* px-4 */
   padding-block: 1.5rem; /* py-6 */
 }
 
+
+
+@media (min-width: 1440px) {
+  .page-shell {
+    max-width: 96rem; /* max-w-screen-2xl — a bit roomier than max-w-7xl */
+    padding-inline: 1.5rem; /* md:px-6 */
+  }
+}
 @media (min-width: 768px) {
   .page-shell {
     padding-inline: 1.5rem; /* md:px-6 */

@@ -73,7 +73,7 @@ export default async function TestReportsPage() {
   }));
 
   return (
-    <div className="p-6">
+    <div className="page-shell">
       <TestReportsClient
         initialMarks={initialMarks}
         classes={allClasses}

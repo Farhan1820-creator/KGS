@@ -38,7 +38,7 @@ export default async function DashboardNotesPage() {
 
     if (!student || !student.classId) {
       return (
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="page-shell">
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6 text-center space-y-3">
             <div className="h-12 w-12 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 mx-auto flex items-center justify-center">
               <AlertCircle className="h-6 w-6" />
@@ -93,7 +93,7 @@ export default async function DashboardNotesPage() {
       : "Your Class";
 
     return (
-      <div className="p-6">
+      <div className="page-shell">
         <StudentNotesClient
           notes={studentNotesRows.map((n) => ({
             id: n.id,
@@ -177,7 +177,7 @@ export default async function DashboardNotesPage() {
 
 
   return (
-    <div className="p-6">
+    <div className="page-shell">
       <NotesClient
         initialNotes={noteRows}
         classes={allClasses}

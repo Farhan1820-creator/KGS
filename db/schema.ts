@@ -75,6 +75,9 @@ export const diaryEntries = pgTable("diary_entries", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   classId: integer("class_id").notNull().references(() => classes.id, { onDelete: "cascade" }),
+  // Optional: when set, this diary entry is only visible to the specific student.
+  // When null, the entry is class-wide (visible to all students in the class).
+  studentId: integer("student_id").references(() => students.id, { onDelete: "cascade" }),
   message: text("message"), // nullable — a file-only entry is valid
   fileUrl: varchar("file_url", { length: 500 }),
   fileName: varchar("file_name", { length: 255 }),
@@ -86,6 +89,7 @@ export const diaryEntries = pgTable("diary_entries", {
 export const diaryEntriesRelations = relations(diaryEntries, ({ one }) => ({
   sender: one(users, { fields: [diaryEntries.senderId], references: [users.id] }),
   class: one(classes, { fields: [diaryEntries.classId], references: [classes.id] }),
+  student: one(students, { fields: [diaryEntries.studentId], references: [students.id] }),
 }));
 
 // ---- Notes ---------------------------------------------------------------

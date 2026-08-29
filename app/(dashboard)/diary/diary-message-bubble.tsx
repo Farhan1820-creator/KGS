@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileDown, Pencil, Trash2, Check, X } from "lucide-react";
+import { FileDown, Pencil, Trash2, Check, X, User } from "lucide-react";
 import { updateDiaryEntry, deleteDiaryEntry } from "./diary-actions";
 
 export type DiaryEntryRow = {
@@ -16,6 +16,7 @@ export type DiaryEntryRow = {
   fileUrl: string | null;
   fileName: string | null;
   createdAt: string;
+  studentName: string | null; // name of the targeted student, null = class-wide
 };
 
 interface DiaryMessageBubbleProps {
@@ -50,15 +51,43 @@ export function DiaryMessageBubble({ entry, canManage, isOwn }: DiaryMessageBubb
     }
   }
 
+  const formattedTime = new Date(entry.createdAt).toLocaleString("en-PK", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
   return (
     <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[75%] rounded-lg px-3 py-2 space-y-1",
-          isOwn ? "bg-primary text-primary-foreground" : "bg-muted"
+          "max-w-[75%] rounded-2xl px-3.5 py-2.5 space-y-1.5 shadow-sm",
+          isOwn
+            ? "bg-primary text-primary-foreground rounded-br-md"
+            : "bg-muted rounded-bl-md"
         )}
       >
-        {!isOwn && <p className="text-xs font-semibold opacity-70">{entry.senderName}</p>}
+        {/* Sender name (other people's messages) */}
+        {!isOwn && (
+          <p className="text-xs font-semibold opacity-80">{entry.senderName}</p>
+        )}
+
+        {/* Student target badge */}
+        {entry.studentName && (
+          <div
+            className={cn(
+              "inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full",
+              isOwn
+                ? "bg-primary-foreground/15 text-primary-foreground"
+                : "bg-primary/10 text-primary"
+            )}
+          >
+            <User className="h-2.5 w-2.5" />
+            For: {entry.studentName}
+          </div>
+        )}
 
         {editing ? (
           <div className="space-y-2">
@@ -83,7 +112,9 @@ export function DiaryMessageBubble({ entry, canManage, isOwn }: DiaryMessageBubb
           </div>
         ) : (
           <>
-            {entry.message && <p className="text-sm whitespace-pre-wrap">{entry.message}</p>}
+            {entry.message && (
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{entry.message}</p>
+            )}
 
             {entry.fileUrl && (
               <a
@@ -91,23 +122,26 @@ export function DiaryMessageBubble({ entry, canManage, isOwn }: DiaryMessageBubb
                 download={entry.fileName ?? true}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm underline underline-offset-2"
+                className={cn(
+                  "flex items-center gap-2 text-sm underline underline-offset-2 rounded-lg px-2 py-1.5 -mx-1 transition-colors",
+                  isOwn ? "hover:bg-primary-foreground/10" : "hover:bg-accent/50"
+                )}
               >
                 <FileDown className="h-4 w-4 shrink-0" />
                 <span className="truncate">{entry.fileName ?? "Attachment"}</span>
               </a>
             )}
 
-            <p className="text-[10px] opacity-60">{new Date(entry.createdAt).toLocaleString()}</p>
+            <p className="text-[10px] opacity-50">{formattedTime}</p>
           </>
         )}
 
         {canManage && !editing && (
-          <div className="flex gap-1 justify-end pt-1">
+          <div className="flex gap-0.5 justify-end -mb-1">
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 opacity-70"
+              className="h-6 w-6 opacity-60 hover:opacity-100"
               onClick={() => setEditing(true)}
               disabled={busy}
             >
@@ -116,7 +150,7 @@ export function DiaryMessageBubble({ entry, canManage, isOwn }: DiaryMessageBubb
             <Button
               size="icon"
               variant="ghost"
-              className="h-6 w-6 opacity-70"
+              className="h-6 w-6 opacity-60 hover:opacity-100"
               onClick={handleDelete}
               disabled={busy}
             >

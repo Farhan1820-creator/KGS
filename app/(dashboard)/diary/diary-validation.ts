@@ -3,6 +3,7 @@ import { z } from "zod";
 export const diaryEntrySchema = z
   .object({
     classId: z.string().min(1, "Select a class"),
+    studentId: z.string().optional(), // optional — when set, diary entry targets this student only
     message: z.string().optional(),
     fileUrl: z.string().optional(),
     fileName: z.string().optional(),
@@ -14,3 +15,4 @@ export const diaryEntrySchema = z
   });
 
 export type DiaryEntryFormValues = z.infer<typeof diaryEntrySchema>;
+

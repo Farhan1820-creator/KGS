@@ -49,7 +49,7 @@ export default async function DashboardNoteDetailPage({ params }: Props) {
 
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+    <div className="page-shell">
       <NoteDetailView
         note={note}
         initialComments={initialComments}
