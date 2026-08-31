@@ -193,7 +193,7 @@ export function Sidebar({ role, user }: SidebarProps) {
           >
             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs group-hover:scale-105 transition-transform">
               <Image
-                src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+                src="https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"
                 alt="Learnex Logo"
                 width={28}
                 height={28}

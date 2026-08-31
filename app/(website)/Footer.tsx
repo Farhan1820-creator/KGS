@@ -13,7 +13,7 @@ export default function Footer() {
           <div className="lg:col-span-4 space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
               <Image
-                src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+                src="https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"
                 alt="The Learnex Academy Crest Logo"
                 width={38}
                 height={38}

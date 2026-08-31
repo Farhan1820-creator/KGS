@@ -22,7 +22,7 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-6">
         <Link href="/" className="group flex items-center gap-2.5">
           <Image
-            src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+            src="https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"
             alt="The Learnex Academy logo"
             width={34}
             height={34}

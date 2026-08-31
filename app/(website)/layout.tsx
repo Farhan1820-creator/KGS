@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png",
+        url: "https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png",
         width: 800,
         height: 800,
         alt: "The Learnex Academy Multan Logo - Learn Evolve Excel",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     title: "The Learnex Academy Multan — Learn, Evolve, Excel",
     description:
       "Admission Open in Multan: PG to Intermediate, O Level, FSc, CA Subjects, Canva, MS Office, AI Presentation & English Classes.",
-    images: ["https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"],
+    images: ["https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"],
   },
   category: "Education",
 };

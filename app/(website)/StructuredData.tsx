@@ -9,8 +9,8 @@ export default function StructuredData() {
     alternateName: ["Learnex Academy Multan", "The Learnex Educational Academy"],
     slogan: "Learn, Evolve, Excel",
     url: baseUrl,
-    logo: "https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png",
-    image: "https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png",
+    logo: "https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png",
+    image: "https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png",
     description:
       "The Learnex Academy Multan offers Morning Early Foundation Classes (PG to Matric/Intermediate), Cambridge O Level, FSc, ICS, I.Com, CA Subjects (Accounting, Quantitative Methods, Economics, Business), along with Canva Designing, MS Office, AI Presentation, and Spoken English classes.",
     telephone: "+92-316-6581934",

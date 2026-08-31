@@ -57,7 +57,7 @@ export default async function StudentPortalNoteDetailPage({ params }: Props) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3">
           <div className="flex items-center gap-3">
             <Image
-              src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+              src="https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"
               alt="The Learnex Academy"
               width={32}
               height={32}

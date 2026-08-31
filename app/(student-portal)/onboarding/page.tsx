@@ -77,7 +77,7 @@ export default async function OnboardingPage() {
         {/* Logo footer */}
         <div className="mt-6 flex items-center justify-center gap-2">
           <Image
-            src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+            src="https://res.cloudinary.com/dggey8rb6/image/upload/v1788157055/evmwj2iaibk9hqqkkpbm.png"
             alt="The Learnex Academy"
             width={20}
             height={20}
