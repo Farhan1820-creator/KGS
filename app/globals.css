@@ -342,3 +342,14 @@ body {
 .animate-blur-reveal {
   animation: blurReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Shimmer Mask Animation for Capsules & Cards */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+

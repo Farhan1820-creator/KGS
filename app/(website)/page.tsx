@@ -2,37 +2,47 @@ import Navbar from "./Navbar";
 import Hero from "./Hero";
 import WhyLearnex from "./WhyLearnex";
 import Courses from "./Courses";
-import CinematicVideo from "./CinematicVideo";
+import LifeAtLearnex from "./LifeAtLearnex";
 import Stats from "./Stats";
+import FAQ from "./FAQ";
 import CtaBanner from "./CtaBanner";
+import ContactSection from "./ContactSection";
 import Footer from "./Footer";
+import StructuredData from "./StructuredData";
+import {
+  fetchHeroSlides,
+  fetchWhyLearnex,
+  fetchCourses,
+  fetchLifeAtLearnex,
+  fetchStats,
+  fetchFAQs,
+} from "@/lib/sanity/queries";
 
-const organizationSchema = {
-  "@context": "https://schema.org",
-  "@type": "EducationalOrganization",
-  name: "The Learnex Academy",
-  url: "https://www.thelearnexacademy.com",
-  logo: "https://www.thelearnexacademy.com/logo.png",
-  description:
-    "The Learnex Academy offers premier academic coaching for School (PG–Matric), O Level, College Intermediate (FSc, ICom, ICS), University/Bachelor students, and CA (PRC), along with practical Canva and MS Office courses.",
-};
+export const revalidate = 60;
 
-export default function Home() {
+export default async function Home() {
+  const [heroSlides, whyLearnex, courses, lifeAtLearnex, stats, faqs] = await Promise.all([
+    fetchHeroSlides(),
+    fetchWhyLearnex(),
+    fetchCourses(),
+    fetchLifeAtLearnex(),
+    fetchStats(),
+    fetchFAQs(),
+  ]);
+
   return (
     <>
-      <script
-        type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-      />
+      <StructuredData />
       <Navbar />
       <main>
-        <Hero />
-        <WhyLearnex />
-        <Courses />
-        <CinematicVideo />
-        <Stats />
+        <Hero initialSlides={heroSlides} />
+        <WhyLearnex initialItems={whyLearnex} />
+        <Courses initialCourses={courses} />
+        <LifeAtLearnex initialSlides={lifeAtLearnex} />
+        <Stats initialStats={stats} />
+        <FAQ initialFaqs={faqs} />
         <CtaBanner />
+        <ContactSection />
       </main>
       <Footer />
     </>

@@ -4,8 +4,15 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "The Learnex Academy",
-  description: "Academy Management System & Portal",
+  title: {
+    default: "The Learnex Academy",
+    template: "%s | The Learnex Academy",
+  },
+  description: "The Learnex Academy — Premier Academic Coaching & Student Portal",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

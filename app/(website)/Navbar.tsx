@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { GraduationCap } from "lucide-react";
+import MagneticButton from "./MagneticButton";
 
 const navLinks = [
-  { label: "Courses", href: "#courses" },
+  { label: "Programs", href: "#courses" },
   { label: "Why Us", href: "#why" },
-  { label: "About", href: "#about" },
-  { label: "Notes", href: "/notes" },
+  { label: "Life at Learnex", href: "#life-at-learnex" },
+  { label: "FAQs", href: "#faq" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -17,10 +18,16 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-[#E5EEF8] bg-[#FAFCFF]/85 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-[#E5EEF8] bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png" alt="The Learnex Academy logo" width={34} height={34} className="rounded-full" />
+        <Link href="/" className="group flex items-center gap-2.5">
+          <Image
+            src="https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"
+            alt="The Learnex Academy logo"
+            width={34}
+            height={34}
+            className="rounded-full transition-transform duration-300 group-hover:rotate-[8deg] group-hover:scale-110"
+          />
           <span className="font-display text-base font-semibold md:text-lg">The Learnex Academy</span>
         </Link>
 
@@ -40,19 +47,20 @@ export default function Navbar() {
             <GraduationCap className="h-4 w-4" />
             Student Portal
           </Link>
-          <a
+          <MagneticButton
             href="#contact"
-            className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:-translate-y-0.5"
+            strength={0.35}
+            className="inline-block rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm"
           >
             Enroll Now
-          </a>
+          </MagneticButton>
         </div>
 
         <button
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen(!open)}
-          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 md:hidden"
+          className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 md:hidden cursor-pointer"
         >
           <span className={`h-0.5 w-6 bg-foreground transition-transform ${open ? "translate-y-2 rotate-45" : ""}`} />
           <span className={`h-0.5 w-6 bg-foreground transition-opacity ${open ? "opacity-0" : ""}`} />
@@ -61,13 +69,13 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <div className="flex flex-col gap-1 border-t border-[#E5EEF7] bg-[#FAFCFF] px-5 pb-5 pt-2 md:hidden animate-in fade-in-0 duration-150">
+        <div className="flex flex-col gap-1 border-t border-[#E5EEF7] bg-white px-5 pb-5 pt-2 md:hidden animate-in fade-in-0 duration-150">
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-text-muted hover:bg-bg-soft hover:text-primary"
+              className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-text-muted hover:bg-slate-50 hover:text-primary"
             >
               {link.label}
             </a>

@@ -1,40 +1,81 @@
 import type { Metadata } from "next";
 import "../globals.css";
 
-// NOTE: next/font/google requires network access to fonts.googleapis.com at build time.
-// If your environment can reach Google Fonts, swap this back to:
-//   import { Poppins, Inter } from "next/font/google";
-//   const poppins = Poppins({ variable: "--font-poppins", subsets: ["latin"], weight: ["500","600","700"] });
-//   const inter = Inter({ variable: "--font-inter", subsets: ["latin"], weight: ["400","500","600"] });
-// and add `${poppins.variable} ${inter.variable}` back to the body className below.
-
-// TODO: replace with production domain
-const siteUrl = "https://www.thelearnexacademy.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.thelearnexacademy.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "The Learnex Academy — School, College, University & Professional Courses",
+  title: {
+    default: "The Learnex Academy Multan — Learn, Evolve, Excel",
+    template: "%s | The Learnex Academy Multan",
+  },
   description:
-    "The Learnex Academy offers expert coaching from Class PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelor Degrees, CA (PRC), plus Canva and MS Office courses.",
+    "The Learnex Academy Multan offers Morning Early Foundation Classes (PG to Intermediate), O Level, FSc, ICS, I.Com, CA Subjects, Canva Designing, MS Office, AI Presentation & English Classes. Call/WhatsApp 0316-6581934.",
+  keywords: [
+    "The Learnex Academy",
+    "Learnex Academy Multan",
+    "best academy in Multan",
+    "coaching academy Model Town Multan",
+    "Morning Early Foundation Classes Multan",
+    "O Level academy Multan",
+    "FSc coaching Multan",
+    "ICS institute Multan",
+    "ICom classes Multan",
+    "CA PRC coaching Multan",
+    "Canva designing course Multan",
+    "MS Office course Multan",
+    "AI Presentation course",
+    "Spoken English classes Multan",
+    "daily weekly monthly tests academy",
+    "Bloomfield Hall Model Town Multan academy",
+  ],
+  authors: [{ name: "The Learnex Academy Multan", url: siteUrl }],
+  creator: "The Learnex Academy",
+  publisher: "The Learnex Academy",
+  formatDetection: {
+    email: true,
+    address: true,
+    telephone: true,
+  },
   alternates: {
     canonical: siteUrl,
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "The Learnex Academy — School, College, University & Professional Courses",
+    title: "The Learnex Academy Multan — Learn, Evolve, Excel",
     description:
-      "Premier coaching for PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelors, CA (PRC), Canva Graphic Design & MS Office.",
+      "Admission Open in Multan: Morning Early Foundation (PG–10th), O Level, FSc, ICS, I.Com, CA Subjects, Canva, MS Office, AI Presentation & English. Call 0316-6581934.",
     url: siteUrl,
     siteName: "The Learnex Academy",
-    images: [{ url: "/logo.png", width: 1080, height: 1080 }],
+    locale: "en_PK",
     type: "website",
+    images: [
+      {
+        url: "https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png",
+        width: 800,
+        height: 800,
+        alt: "The Learnex Academy Multan Logo - Learn Evolve Excel",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Learnex Academy — School, College, University & Professional Courses",
+    title: "The Learnex Academy Multan — Learn, Evolve, Excel",
     description:
-      "Premier coaching for PG–Matric, O Level, Intermediate (FSc, ICom, ICS), Bachelors, CA (PRC), Canva & MS Office.",
-    images: ["/logo.png"],
+      "Admission Open in Multan: PG to Intermediate, O Level, FSc, CA Subjects, Canva, MS Office, AI Presentation & English Classes.",
+    images: ["https://res.cloudinary.com/dggey8rb6/image/upload/v1787375492/logo.png"],
   },
+  category: "Education",
 };
 
 export default function WebsiteLayout({
